@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-[calc(100vh-140px)]">
+    <!-- Chat Header -->
+    <div class="bg-gray-100 p-4 border-b flex items-center justify-between">
+        <div class="flex items-center">
+            <div
+                class="w-10 h-10 rounded-full bg-orange-200 flex items-center justify-center text-orange-700 font-bold mr-3">
+                {{ recipient.username[0].upper() }}
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-800">{{ recipient.username }}</h3>
+                <span class="text-green-500 text-xs"><i class="fas fa-circle text-[8px] mr-1"></i> Online</span>
+            </div>
+        </div>
+        <a href="{{ url_for('index') }}" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times"></i></a>
+    </div>
+
+    <!-- Messages Area -->
+    <div id="messages" class="flex-grow p-4 overflow-y-auto space-y-4 bg-gray-50">
+        {% for msg in messages %}
+        <div class="flex {% if msg.sender_id == current_user.id %} justify-end {% else %} justify-start {% endif %}">
+            <div
+                class="max-w-[70%] rounded-lg px-4 py-2 shadow-sm 
+                {% if msg.sender_id == current_user.id %} bg-orange-600 text-white rounded-br-none {% else %} bg-white text-gray-800 rounded-bl-none {% endif %}">
+                <p>{{ msg.body }}</p>
+                <span class="text-[10px] block mt-1 opacity-70 text-right">{{ msg.timestamp.strftime('%H:%M') }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Input Area -->
+    <div class="p-4 bg-white border-t">
+        <form id="chatForm" class="flex gap-2">
+            <input type="text" id="messageInput" placeholder="Nhập tin nhắn..." required
+                class="flex-grow px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-100">
+            <button type="submit"
+                class="bg-orange-600 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-orange-700 transition">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    const socket = io();
+    const recipientId = {{ recipient.id }};
+    const currentUserId = {{ current_user.id }};
+    const messagesDiv = document.getElementById('messages');
+
+    // Join specific room
+    socket.emit('join_chat', { recipient_id: recipientId });
+
+    // Scroll to bottom
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    document.getElementById('chatForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = document.getElementById('messageInput');
+        const message = input.value.trim();
+
+        if (message) {
+            socket.emit('send_message', {
+                recipient_id: recipientId,
+                message: message
+            });
+            input.value = '';
+        }
+    });
+
+    socket.on('receive_message', (data) => {
+        const isMe = data.sender_id === currentUserId;
+        const div = document.createElement('div');
+        div.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
+
+        div.innerHTML = `
+            <div class="max-w-[70%] rounded-lg px-4 py-2 shadow-sm ${isMe ? 'bg-orange-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none'}">
+                <p>${data.message}</p>
+                 <span class="text-[10px] block mt-1 opacity-70 text-right">${data.timestamp.split(' ')[1]}</span>
+            </div>
+        `;
+
+        messagesDiv.appendChild(div);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+</script>
+{% endblock %}
