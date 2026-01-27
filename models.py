@@ -10,6 +10,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     phone = db.Column(db.String(20), nullable=True)
+    is_admin = db.Column(db.Boolean, default=False)
 
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -32,3 +33,11 @@ class Message(db.Model):
     
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
     recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_messages')
+
+class ActionLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    action = db.Column(db.String(100), nullable=False) # e.g., "Posted Item", "Deleted Item"
+    details = db.Column(db.Text, nullable=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User', backref=db.backref('logs', lazy=True))

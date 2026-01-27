@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>F-LostFound - Tìm Đồ Thất Lạc</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -38,7 +40,20 @@
                     <a href="{{ url_for('post_item') }}"
                         class="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition">Đăng
                         Tin</a>
+
+                    <!-- Notification Bell -->
+                    <a href="{{ url_for('messages_inbox') }}"
+                        class="relative text-gray-700 hover:text-orange-600 px-3 py-2">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span id="nav-badge"
+                            class="hidden absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">!</span>
+                    </a>
+
                     <span class="text-gray-500">Hi, {{ current_user.username }}</span>
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin_dashboard') }}"
+                        class="text-red-600 font-bold hover:text-red-800 px-3 py-2">Admin Panel</a>
+                    {% endif %}
                     <a href="{{ url_for('logout') }}" class="text-gray-700 hover:text-red-600 px-3 py-2">Đăng Xuất</a>
                     {% else %}
                     <a href="{{ url_for('login') }}" class="text-gray-700 hover:text-orange-600 px-3 py-2">Đăng Nhập</a>
@@ -67,6 +82,18 @@
         {% endwith %}
     </div>
 
+    <!-- Floating Chat Bubble -->
+    {% if current_user.is_authenticated %}
+    <div class="fixed bottom-6 right-6 z-40">
+        <a href="{{ url_for('messages_inbox') }}"
+            class="block bg-orange-600 hover:bg-orange-700 text-white rounded-full p-4 shadow-lg transition transform hover:scale-110">
+            <i class="fas fa-comment-dots text-2xl"></i>
+            <span id="bubble-badge"
+                class="hidden absolute top-0 right-0 inline-flex items-center justify-center h-4 w-4 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full"></span>
+        </a>
+    </div>
+    {% endif %}
+
     <!-- Main Content -->
     <main class="flex-grow container mx-auto px-4 pt-24 pb-12">
         {% block content %}{% endblock %}
@@ -83,15 +110,47 @@
         document.addEventListener('DOMContentLoaded', () => {
             const toasts = document.querySelectorAll('.toast-message');
             toasts.forEach((toast) => {
-                // Fade out after 3 seconds
                 setTimeout(() => {
                     toast.classList.add('opacity-0', 'translate-x-full');
-                    // Remove from DOM after transition (500ms)
-                    setTimeout(() => {
-                        toast.remove();
-                    }, 500);
+                    setTimeout(() => toast.remove(), 500);
                 }, 3000);
             });
+
+            {% if current_user.is_authenticated %}
+            // Socket.IO Notification
+            const socket = io();
+            socket.on('connect', () => {
+                socket.emit('join_notifications');
+            });
+
+            socket.on('notification', (data) => {
+                // Play notification sound (optional)
+
+                // Show Badge
+                document.getElementById('nav-badge').classList.remove('hidden');
+                document.getElementById('bubble-badge').classList.remove('hidden');
+
+                // Create Toast
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = 'toast-message transform transition-all duration-500 ease-in-out px-6 py-4 rounded shadow-lg text-white flex items-center min-w-[300px] bg-blue-500';
+                toast.innerHTML = `
+                    <i class="fas fa-comment mr-3 text-xl"></i>
+                    <div class="flex flex-col">
+                        <span class="font-bold">${data.sender_name}</span>
+                        <span class="text-sm truncate max-w-xs">${data.message}</span>
+                    </div>
+                `;
+
+                container.appendChild(toast);
+
+                // Auto dismiss
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-x-full');
+                    setTimeout(() => toast.remove(), 500);
+                }, 4000);
+            });
+            {% endif %}
         });
     </script>
     {% block scripts %}{% endblock %}
