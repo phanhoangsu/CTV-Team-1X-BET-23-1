@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Item, Message, ActionLog
 from ai_service import ai_detector
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'dev_key_secret' # Change in production
@@ -39,6 +40,12 @@ def admin_required(f):
             return redirect(url_for('index'))
         return f(*args, **kwargs)
     return decorated_function
+
+@app.before_request
+def before_request():
+    if current_user.is_authenticated:
+        current_user.last_seen = datetime.utcnow()
+        db.session.commit()
 
 @app.route('/')
 def index():
@@ -143,7 +150,7 @@ def chat(recipient_id):
         ((Message.sender_id == recipient_id) & (Message.recipient_id == current_user.id))
     ).order_by(Message.timestamp.asc()).all()
     
-    return render_template('chat.html', recipient=recipient, messages=messages)
+    return render_template('chat.html', recipient=recipient, messages=messages, datetime=datetime)
 
 @app.route('/messages')
 @login_required
@@ -217,7 +224,55 @@ def on_join(data):
 @login_required
 @admin_required
 def admin_dashboard():
-    return render_template('admin_dashboard.html')
+    # User Management Search
+    search_query = request.args.get('q', '')
+    if search_query:
+        users = User.query.filter(
+            (User.username.contains(search_query)) | 
+            (User.email.contains(search_query))
+        ).all()
+    else:
+        users = User.query.order_by(User.last_seen.desc()).all()
+
+    # Statistics
+    total_users = User.query.count()
+    total_items = Item.query.count()
+    total_lost = Item.query.filter_by(item_type='Lost').count()
+    total_found = Item.query.filter_by(item_type='Found').count()
+    
+    # Calculate stats for charts
+    lost_items = Item.query.filter_by(item_type='Lost').all()
+    found_items = Item.query.filter_by(item_type='Found').all()
+    
+    # Helper to count items by date
+    from collections import defaultdict
+    dates = defaultdict(lambda: {'lost': 0, 'found': 0})
+    
+    for item in lost_items:
+        date_str = item.date_posted.strftime('%Y-%m-%d')
+        dates[date_str]['lost'] += 1
+        
+    for item in found_items:
+        date_str = item.date_posted.strftime('%Y-%m-%d')
+        dates[date_str]['found'] += 1
+        
+    # Sort dates
+    sorted_dates = sorted(dates.keys())
+    chart_labels = sorted_dates[-7:] # Last 7 days
+    chart_lost_data = [dates[d]['lost'] for d in chart_labels]
+    chart_found_data = [dates[d]['found'] for d in chart_labels]
+    
+    return render_template('admin_dashboard.html', 
+                           total_users=total_users, 
+                           total_items=total_items,
+                           total_lost=total_lost,
+                           total_found=total_found,
+                           chart_labels=chart_labels,
+                           chart_lost_data=chart_lost_data,
+                           chart_found_data=chart_found_data,
+                           users=users,
+                           search_query=search_query,
+                           now=datetime.utcnow())
 
 @app.route('/admin/posts')
 @login_required
@@ -226,37 +281,57 @@ def admin_posts():
     items = Item.query.order_by(Item.date_posted.desc()).all()
     return render_template('admin_posts.html', items=items)
 
-@app.route('/admin/post/delete/<int:item_id>', methods=['POST'])
+# ... existing admin routes ...
+
+@app.route('/profile', methods=['GET', 'POST'])
 @login_required
-@admin_required
+def profile():
+    if request.method == 'POST':
+        # Update Profile Info
+        phone = request.form.get('phone')
+        email = request.form.get('email')
+        
+        # Basic validation could go here
+        current_user.phone = phone
+        current_user.email = email
+        db.session.commit()
+        flash('Cập nhật thông tin thành công!', 'success')
+        return redirect(url_for('profile'))
+        
+    # Get user's items
+    my_items = Item.query.filter_by(user_id=current_user.id).order_by(Item.date_posted.desc()).all()
+    lost_items = [i for i in my_items if i.item_type == 'Lost']
+    found_items = [i for i in my_items if i.item_type == 'Found']
+    
+    return render_template('profile.html', user=current_user, lost_items=lost_items, found_items=found_items)
+
+# Unified delete route for Admin and Post Owner
+@app.route('/post/delete/<int:item_id>', methods=['POST'])
+@login_required
 def delete_post(item_id):
     item = Item.query.get_or_404(item_id)
+    
+    # Check permission: Admin or Owner
+    if not current_user.is_admin and current_user.id != item.user_id:
+        flash('Bạn không có quyền xóa bài này.', 'danger')
+        return redirect(url_for('index'))
+        
     # Log the deletion
-    log = ActionLog(user_id=current_user.id, action="Xóa bài", details=f"Đã xóa bài: {item.title} của user {item.user.username}")
+    action_type = "Admin Xóa bài" if current_user.is_admin and current_user.id != item.user_id else "Người dùng xóa bài"
+    log = ActionLog(user_id=current_user.id, action=action_type, details=f"Đã xóa bài: {item.title}")
     db.session.add(log)
     
     db.session.delete(item)
     db.session.commit()
     flash('Đã xóa bài đăng.', 'success')
-    return redirect(url_for('admin_posts'))
-
-@app.route('/admin/logs')
-@login_required
-@admin_required
-def admin_logs():
-    logs = ActionLog.query.order_by(ActionLog.timestamp.desc()).all()
-    return render_template('admin_logs.html', logs=logs)
-
-# Temporary route to setup admin (remove in production)
-@app.route('/setup_admin')
-def setup_admin():
-    # Make the first user admin or a specific user
-    user = User.query.first()
-    if user:
-        user.is_admin = True
-        db.session.commit()
-        return f"User {user.username} is now Admin."
-    return "No users found."
+    
+    # Redirect back to where they came from if possible, or default
+    if request.referrer and 'admin' in request.referrer:
+        return redirect(url_for('admin_posts'))
+    elif request.referrer and 'profile' in request.referrer:
+        return redirect(url_for('profile'))
+    else:
+        return redirect(url_for('index'))
 
 if __name__ == '__main__':
     with app.app_context():

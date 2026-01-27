@@ -4,7 +4,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 class SpamDetector:
     def __init__(self):
-        self.vectorizer = TfidfVectorizer(stop_words='english')
+        # Allow single characters and don't use stop words to avoid empty vocabulary on short inputs
+        self.vectorizer = TfidfVectorizer(token_pattern=r'(?u)\b\w+\b')
         self.posts_data = [] # List of strings (title + description)
         self.tfidf_matrix = None
 
