@@ -281,6 +281,13 @@ def admin_posts():
     items = Item.query.order_by(Item.date_posted.desc()).all()
     return render_template('admin_posts.html', items=items)
 
+@app.route('/admin/logs')
+@login_required
+@admin_required
+def admin_logs():
+    logs = ActionLog.query.order_by(ActionLog.timestamp.desc()).all()
+    return render_template('admin_logs.html', logs=logs)
+
 # ... existing admin routes ...
 
 @app.route('/profile', methods=['GET', 'POST'])
