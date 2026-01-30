@@ -49,7 +49,7 @@ def before_request():
 
 @app.route('/')
 def index():
-    query = request.args.get('q', '')
+    query = request.args.get('q', '').strip()
     if query:
         items = Item.query.filter(
             (Item.title.contains(query)) | 
