@@ -7,10 +7,96 @@ from models import db, User, Item, Message, ActionLog
 from ai_service import ai_detector
 import os
 from datetime import datetime
+import cloudinary
+import cloudinary.uploader
+import json
+from pydantic import BaseModel, Field, field_validator, ValidationError
+from enum import Enum
+from typing import Optional, List
+
+cloudinary.config( 
+  cloud_name = "dbpqjnu0o", 
+  api_key = "993875778549414", 
+  api_secret = "3x481JaXw14kqHXncdocSg_A5O8" 
+)
+
+# Pydantic Validation Schemas
+class PostType(str, Enum):
+    LOST = "LOST"
+    FOUND = "FOUND"
+
+class LocationSchema(BaseModel):
+    building: str
+    detail: str = Field(..., min_length=1)
+    
+    @field_validator('detail')
+    @classmethod
+    def detail_not_empty(cls, v):
+        if not v or not v.strip():
+            raise ValueError('Vui lòng cho biết bạn mất/nhặt được ở đâu.')
+        return v.strip()
+
+class PostCreateSchema(BaseModel):
+    type: PostType
+    title: str = Field(..., min_length=10, max_length=100)
+    description: str = Field(..., min_length=10, max_length=1000)
+    category_id: int = Field(..., gt=0)
+    location: LocationSchema
+    event_date: Optional[str] = None
+    images: List[str] = Field(default_factory=list)
+    contact_phone: Optional[str] = None
+
+    @field_validator('title')
+    @classmethod
+    def title_must_not_be_all_numbers(cls, v):
+        if v.strip().isdigit():
+            raise ValueError('Tiêu đề không được chỉ chứa số')
+        return v.strip()
+
+    @field_validator('description')
+    @classmethod
+    def description_not_empty(cls, v):
+        if not v or not v.strip():
+            raise ValueError('Hãy mô tả chi tiết để mọi người dễ nhận diện đồ vật.')
+        return v.strip()
+
+
+    @field_validator('event_date')
+    @classmethod
+    def event_date_not_future(cls, v):
+        if v:
+            try:
+                # Parse datetime-local format (YYYY-MM-DDTHH:mm)
+                # This is in local time, so we need to compare with local time
+                if 'T' in v:
+                    # If it has time component
+                    event_date = datetime.fromisoformat(v)
+                else:
+                    # If only date, set to end of day
+                    event_date = datetime.fromisoformat(v + 'T23:59:59')
+                
+                # Compare with current local time (not UTC)
+                now = datetime.now()
+                
+                # Add a small buffer (1 minute) to account for timezone differences
+                from datetime import timedelta
+                buffer = timedelta(minutes=1)
+                
+                if event_date > (now + buffer):
+                    raise ValueError('Ngày không thể là ngày mai được!')
+            except ValueError as e:
+                # Re-raise validation errors
+                raise
+            except Exception:
+                # Let it pass if parsing fails, will be handled in route
+                pass
+        return v
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'dev_key_secret' # Change in production
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///flostfound.db'
+basedir = os.path.abspath(os.path.dirname(__file__))
+db_path = os.path.join(basedir, 'instance', 'flostfound.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -58,6 +144,20 @@ def index():
         ).order_by(Item.date_posted.desc()).all()
     else:
         items = Item.query.order_by(Item.date_posted.desc()).all()
+    
+    # Parse images JSON for each item
+    for item in items:
+        if item.images:
+            try:
+                item.images_list = json.loads(item.images)
+            except:
+                item.images_list = []
+        else:
+            item.images_list = []
+            # Fallback to image_url if images is empty
+            if item.image_url:
+                item.images_list = [item.image_url]
+    
     return render_template('index.html', items=items, query=query)
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -139,6 +239,212 @@ def post_item():
         return redirect(url_for('index'))
         
     return render_template('post_item.html')
+
+@app.route('/api/upload', methods=['POST'])
+@login_required
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    
+    # Debug logging
+    print('=== BACKEND FILE UPLOAD DEBUG ===')
+    print(f'File name: {file.filename}')
+    print(f'File content_type: {file.content_type}')
+    print(f'File content_length: {request.content_length}')
+    
+    # Validate file type
+    allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'jfif'}  # JFIF is JPEG format
+    allowed_mime_types = {
+        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+        'image/x-png', 'image/x-icon'  # Some systems use these variants
+    }
+    
+    # Get file extension - handle spaces and normalize
+    filename_lower = file.filename.lower().strip()
+    print(f'File name (lowercase, trimmed): {filename_lower}')
+    
+    if '.' in filename_lower:
+        file_ext = filename_lower.rsplit('.', 1)[1].strip()  # Remove spaces from extension
+    else:
+        file_ext = ''
+    
+    print(f'File extension (extracted): {file_ext}')
+    print(f'Is extension in allowed list? {file_ext in allowed_extensions}')
+    print(f'Is MIME type in allowed list? {file.content_type in allowed_mime_types if file.content_type else "No MIME type"}')
+    print(f'Does MIME type start with image/? {file.content_type.startswith("image/") if file.content_type else "No MIME type"}')
+    
+    # Priority: Check MIME type first (more reliable), then extension
+    is_valid_mime = file.content_type and (file.content_type in allowed_mime_types or file.content_type.startswith('image/'))
+    is_valid_ext = file_ext and file_ext in allowed_extensions
+    
+    # Allow if either MIME type or extension is valid
+    if not is_valid_mime and not is_valid_ext:
+        print(f'VALIDATION FAILED: Both MIME type and extension check failed')
+        print(f'Extension: {file_ext} | Allowed extensions: {allowed_extensions}')
+        print(f'MIME type: {file.content_type} | Allowed MIME types: {allowed_mime_types}')
+        return jsonify({
+            'error': 'Chỉ chấp nhận file ảnh: JPG, PNG, GIF, WEBP',
+            'debug': {
+                'filename': file.filename,
+                'extension': file_ext,
+                'mime_type': file.content_type
+            }
+        }), 400
+    
+    if is_valid_mime:
+        print('✅ Validation passed via MIME type')
+    elif is_valid_ext:
+        print('✅ Validation passed via extension')
+    
+    # Validate file size (max 5MB)
+    file.seek(0, os.SEEK_END)
+    file_size = file.tell()
+    file.seek(0)  # Reset file pointer
+    
+    max_size = 5 * 1024 * 1024  # 5MB
+    if file_size > max_size:
+        return jsonify({'error': 'File quá lớn, tối đa 5MB thôi bạn nhé!'}), 400
+    
+    # Validate MIME type (more lenient - only warn if extension is valid but MIME type is suspicious)
+    if file.content_type:
+        # Check if MIME type starts with 'image/' (more flexible)
+        if not file.content_type.startswith('image/'):
+            # If extension is valid but MIME type doesn't start with 'image/', still allow it
+            # because some systems may have incorrect MIME types
+            if file_ext in allowed_extensions:
+                pass  # Allow it based on extension
+            else:
+                return jsonify({'error': 'File không phải là ảnh hợp lệ'}), 400
+    
+    try:
+        # Upload to Cloudinary
+        upload_result = cloudinary.uploader.upload(
+            file, 
+            folder = "FPT_Lost_Found", 
+            use_filename = True,       
+            unique_filename = True
+        )
+        return jsonify({'url': upload_result['secure_url']})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/posts', methods=['POST'])
+@login_required
+def create_post_api():
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'error': 'Không có dữ liệu được gửi lên'}), 400
+        
+        # Validate with Pydantic
+        try:
+            validated_data = PostCreateSchema(**data)
+        except ValidationError as e:
+            # Format validation errors for frontend
+            errors = {}
+            for error in e.errors():
+                field = '.'.join(str(x) for x in error['loc'])
+                message = error['msg']
+                errors[field] = message
+            
+            return jsonify({
+                'error': 'Validation failed',
+                'errors': errors
+            }), 400
+
+        # Extract validated data
+        title = validated_data.title
+        description = validated_data.description
+        location_building = validated_data.location.building
+        location_detail = validated_data.location.detail
+        category_id = validated_data.category_id
+        event_date_str = validated_data.event_date
+        images = validated_data.images
+        contact_phone = validated_data.contact_phone
+        item_type = validated_data.type
+        
+        # Map item_type to DB format
+        db_item_type = 'Lost' if item_type == PostType.LOST else 'Found'
+
+        # Parse date
+        event_date = None
+        if event_date_str:
+            try:
+                # Parse datetime-local format (YYYY-MM-DDTHH:mm) - this is in local time
+                if 'T' in event_date_str:
+                    event_date = datetime.fromisoformat(event_date_str)
+                else:
+                    # If only date, set to end of day
+                    event_date = datetime.fromisoformat(event_date_str + 'T23:59:59')
+                
+                # Double check date is not in future (compare with local time, not UTC)
+                now = datetime.now()
+                from datetime import timedelta
+                buffer = timedelta(minutes=1)  # 1 minute buffer
+                
+                if event_date > (now + buffer):
+                    return jsonify({
+                        'error': 'Validation failed',
+                        'errors': {'event_date': 'Ngày không thể là ngày mai được!'}
+                    }), 400
+            except Exception as e:
+                print(f'Error parsing date: {e}')
+                event_date = datetime.now()  # Use local time, not UTC
+
+        # Concatenate location for backward compatibility
+        full_location = f"{location_building}, {location_detail}"
+
+        # AI Spam Check
+        post_text = f"{title} {description}"
+        is_spam, score = ai_detector.is_spam(post_text)
+        if is_spam:
+            return jsonify({
+                'error': 'Spam detection',
+                'message': f'Bài viết bị từ chối: Nội dung quá giống với bài viết đã có (Độ trùng lặp: {score:.2f}). Vui lòng kiểm tra xem bạn đã đăng chưa.',
+                'is_spam': True
+            }), 400
+
+        new_item = Item(
+            title=title,
+            description=description,
+            location=full_location,
+            location_detail=location_detail,
+            item_type=db_item_type,
+            contact_info=contact_phone or current_user.email,
+            user_id=current_user.id,
+            images=json.dumps(images),
+            image_url=images[0] if images else None,
+            category_id=category_id,
+            event_date=event_date
+        )
+        
+        db.session.add(new_item)
+        db.session.commit()
+        
+        # Log action
+        log = ActionLog(user_id=current_user.id, action="Đăng bài API", details=f"Tiêu đề: {title}")
+        db.session.add(log)
+        db.session.commit()
+        
+        refresh_ai_model()
+        return jsonify({'message': 'Post created successfully', 'id': new_item.id})
+
+    except ValidationError as e:
+        errors = {}
+        for error in e.errors():
+            field = '.'.join(str(x) for x in error['loc'])
+            message = error['msg']
+            errors[field] = message
+        return jsonify({
+            'error': 'Validation failed',
+            'errors': errors
+        }), 400
+    except Exception as e:
+        print(e)
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/chat/<int:recipient_id>')
 @login_required
@@ -333,8 +639,34 @@ def delete_post(item_id):
     else:
         return redirect(url_for('index'))
 
+def patch_database():
+    """Add missing columns to existing database"""
+    import sqlite3
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    def add_col(table, col, type_def):
+        try:
+            cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col} {type_def}")
+            print(f"Added {col} to {table}")
+        except Exception as e:
+            if "duplicate column name" not in str(e).lower():
+                print(f"Skipped {col} (probably exists): {e}")
+    
+    # Add columns requested by new features
+    add_col('item', 'images', 'TEXT')
+    add_col('item', 'category_id', 'INTEGER')
+    add_col('item', 'event_date', 'DATETIME')
+    add_col('item', 'location_detail', 'TEXT')
+    add_col('user', 'is_admin', 'BOOLEAN DEFAULT 0')
+    
+    conn.commit()
+    conn.close()
+    print("Database patched.")
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        patch_database()
         refresh_ai_model()
     socketio.run(app, debug=True, use_reloader=True, log_output=True)

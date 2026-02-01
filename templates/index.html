@@ -21,8 +21,26 @@
 <!-- Items Grid -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for item in items %}
-    <div
-        class="bg-white rounded-xl shadow hover:shadow-lg transition duration-300 overflow-hidden relative border border-gray-100 flex flex-col">
+    <div class="bg-white rounded-xl shadow hover:shadow-lg transition duration-300 overflow-hidden relative border border-gray-100 flex flex-col cursor-pointer item-card"
+        data-item-id="{{ item.id }}">
+        <!-- Image Section -->
+        {% if item.images_list and item.images_list|length > 0 %}
+        <div class="relative w-full h-48 bg-gray-200 overflow-hidden">
+            <img src="{{ item.images_list[0] }}" alt="{{ item.title }}"
+                class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+            {% if item.images_list|length > 1 %}
+            <div
+                class="absolute top-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                <i class="fas fa-images mr-1"></i>{{ item.images_list|length }}
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="relative w-full h-48 bg-gray-200 flex items-center justify-center">
+            <i class="fas fa-image text-gray-400 text-4xl"></i>
+        </div>
+        {% endif %}
+
         <div class="p-6 flex-grow">
             <div class="flex justify-between items-start mb-4">
                 <span
@@ -51,8 +69,8 @@
             </div>
 
             <button
-                onclick="openContactModal('{{ item.title }}', '{{ item.location }}', '{{ item.contact_info }}', '{{ item.user.username }}', '{{ item.user.id }}')"
-                class="text-orange-600 hover:text-orange-800 font-semibold text-sm focus:outline-none">
+                onclick="event.stopPropagation(); console.log('%cContact Button Clicked', 'color: orange; font-weight: bold'); openContactModalById({{ item.id }})"
+                class="text-orange-600 hover:text-orange-800 font-semibold text-sm focus:outline-none z-10 relative contact-btn">
                 Liên hệ <i class="fas fa-chevron-right ml-1"></i>
             </button>
         </div>
@@ -61,13 +79,120 @@
     <div class="col-span-full text-center py-12">
         <div class="text-gray-400 text-6xl mb-4"><i class="fas fa-search"></i></div>
         <p class="text-xl text-gray-600">Không tìm thấy tin nào phù hợp.</p>
-        <a href="{{ url_for('post_item') }}" class="text-orange-600 font-bold hover:underline mt-2 inline-block">Đăng
-            tin ngay</a>
+        <button onclick="window.openPostModal()"
+            class="text-orange-600 font-bold hover:underline mt-2 inline-block bg-transparent border-none cursor-pointer">Đăng
+            tin ngay</button>
     </div>
     {% endfor %}
 </div>
 
-<!-- Modal -->
+<!-- Item Detail Modal -->
+<div id="itemDetailModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="detail-modal-title"
+    role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true"
+            onclick="closeItemDetailModal()"></div>
+
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
+            onclick="event.stopPropagation()">
+            <!-- Close Button -->
+            <div class="absolute top-4 right-4 z-10">
+                <button onclick="closeItemDetailModal(); event.stopPropagation();"
+                    class="bg-white rounded-full p-2 shadow-lg hover:bg-gray-100">
+                    <i class="fas fa-times text-gray-600"></i>
+                </button>
+            </div>
+
+            <div class="bg-white">
+                <!-- Image Gallery -->
+                <div id="detailImageGallery" class="relative w-full h-[600px] bg-gray-200 overflow-hidden">
+                    <div id="detailImageContainer" class="flex transition-transform duration-300 ease-in-out h-full">
+                        <!-- Images will be inserted here -->
+                    </div>
+                    <!-- Navigation Arrows -->
+                    <button id="prevImageBtn" onclick="changeDetailImage(-1)"
+                        class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 z-10 hidden">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button id="nextImageBtn" onclick="changeDetailImage(1)"
+                        class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 z-10 hidden">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <!-- Image Counter -->
+                    <div id="imageCounter"
+                        class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm z-10 hidden">
+                        <span id="currentImageIndex">1</span> / <span id="totalImages">1</span>
+                    </div>
+                </div>
+
+                <!-- Thumbnail Strip -->
+                <div id="detailThumbnails" class="flex gap-2 p-4 bg-gray-50 overflow-x-auto border-b">
+                    <!-- Thumbnails will be inserted here -->
+                </div>
+
+                <!-- Content -->
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span id="detailItemType"
+                                    class="inline-block px-3 py-1 rounded-full text-xs font-semibold"></span>
+                                <span class="text-gray-400 text-sm"><i class="far fa-clock mr-1"></i> <span
+                                        id="detailDatePosted"></span></span>
+                            </div>
+                            <h2 id="detailTitle" class="text-2xl font-bold text-gray-800 mb-2"></h2>
+                            <p id="detailDescription" class="text-gray-600 mb-4"></p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-map-marker-alt text-orange-500 mr-2 mt-1"></i>
+                            <div>
+                                <p class="text-xs text-gray-500 uppercase">Địa điểm</p>
+                                <p id="detailLocation" class="text-gray-800 font-medium"></p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-user text-orange-500 mr-2 mt-1"></i>
+                            <div>
+                                <p class="text-xs text-gray-500 uppercase">Người đăng</p>
+                                <p id="detailUsername" class="text-gray-800 font-medium"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                        <p class="text-xs text-gray-600 uppercase font-semibold mb-1">Thông tin liên hệ</p>
+                        <p id="detailContactInfo" class="text-xl font-bold text-orange-600 select-all"></p>
+                    </div>
+
+                    <div class="flex gap-2">
+                        {% if current_user.is_authenticated %}
+                        <a id="detailChatLink" href="#"
+                            class="flex-1 inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none">
+                            <i class="fas fa-comment-dots mr-2"></i> Chat Ngay
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('login') }}"
+                            class="flex-1 inline-flex justify-center items-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none">
+                            Đăng nhập để chat
+                        </a>
+                        {% endif %}
+                        <button onclick="openContactModalFromDetail()"
+                            class="flex-1 inline-flex justify-center items-center rounded-md border border-orange-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-orange-600 hover:bg-orange-50 focus:outline-none">
+                            <i class="fas fa-phone mr-2"></i> Xem liên hệ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Modal -->
 <div id="contactModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
     aria-modal="true">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -126,25 +251,384 @@
         </div>
     </div>
 </div>
+</div>
+</div>
+
+<!-- React Post Modal Root -->
+<div id="post-modal-root"></div>
+
+<!-- React & Babel Scripts -->
+<script crossorigin src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- Post Modal Component -->
+<script type="text/babel" src="{{ url_for('static', filename='js/PostModal.js') }}"></script>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
+    console.log('%c=== SCRIPT BLOCK STARTED ===', 'background: #222; color: #bada55; font-size: 20px');
+
+    // Ensure functions are available globally
+    window.openItemDetailModal = null;
+    window.closeItemDetailModal = null;
+    window.itemsData = {}; // Global access for debugging
+
+    console.log('Initialized window functions');
+
+    // Store items data for modal
+    console.log('Starting to build itemsData...');
+    const itemsData = {
+        {% for item in items %}
+    { { item.id } }: {
+        id: { { item.id } },
+        title: { { item.title | tojson } },
+        description: { { item.description | tojson } },
+        location: { { item.location | tojson } },
+        item_type: { { item.item_type | tojson } },
+        contact_info: { { item.contact_info | tojson } },
+        username: { { item.user.username | tojson } },
+        user_id: { { item.user.id } },
+        date_posted: "{{ item.date_posted.strftime('%d/%m/%Y %H:%M') }}",
+            images: { { item.images_list | tojson } }
+    } {% if not loop.last %}, {% endif %}
+    {% endfor %}
+    };
+
+    // Expose to window for debugging
+    window.itemsData = itemsData;
+
+    console.log('%cItemsData loaded:', 'color: blue; font-weight: bold', itemsData);
+    console.log('ItemsData keys:', Object.keys(itemsData));
+    console.log('ItemsData length:', Object.keys(itemsData).length);
+
+    let currentDetailImageIndex = 0;
+    let currentDetailItemId = null;
+
+    // Define function in global scope
+    window.openItemDetailModal = function (itemId) {
+        console.log('%c=== openItemDetailModal CALLED ===', 'background: purple; color: white; font-size: 16px');
+        console.log('itemId:', itemId, 'Type:', typeof itemId);
+
+        // Convert itemId to number if it's a string
+        const numericId = typeof itemId === 'string' ? parseInt(itemId) : itemId;
+        const item = itemsData[numericId] || itemsData[itemId];
+
+        if (!item) {
+            console.error('%cItem not found!', 'color: red; font-size: 16px', itemId);
+            console.log('Available items:', Object.keys(itemsData));
+            alert('Lỗi: Không tìm thấy dữ liệu cho bài đăng này (ID: ' + itemId + ')');
+            return;
+        }
+
+        console.log('%cOpening modal for item:', 'color: green', item.title);
+
+        currentDetailItemId = numericId || itemId;
+        currentDetailImageIndex = 0;
+
+        try {
+            // Set content
+            const detailTitle = document.getElementById('detailTitle');
+            const detailDescription = document.getElementById('detailDescription');
+            const detailLocation = document.getElementById('detailLocation');
+            const detailUsername = document.getElementById('detailUsername');
+            const detailContactInfo = document.getElementById('detailContactInfo');
+            const detailDatePosted = document.getElementById('detailDatePosted');
+
+            if (!detailTitle) console.error('Element #detailTitle missing');
+            if (!detailDescription) console.error('Element #detailDescription missing');
+
+            if (detailTitle) detailTitle.textContent = item.title || '';
+            if (detailDescription) detailDescription.textContent = item.description || '';
+            if (detailLocation) detailLocation.textContent = item.location || '';
+            if (detailUsername) detailUsername.textContent = item.username || '';
+            if (detailContactInfo) detailContactInfo.textContent = item.contact_info || '';
+            if (detailDatePosted) detailDatePosted.textContent = item.date_posted || '';
+
+            // Set item type badge
+            const typeBadge = document.getElementById('detailItemType');
+            if (typeBadge) {
+                typeBadge.textContent = item.item_type || '';
+                if (item.item_type === 'Lost') {
+                    typeBadge.className = 'inline-block px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600';
+                } else {
+                    typeBadge.className = 'inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-600';
+                }
+            }
+
+            // Set chat link
+            const chatLink = document.getElementById('detailChatLink');
+            if (chatLink) {
+                if (item.user_id) {
+                    chatLink.href = "/chat/" + item.user_id;
+                    chatLink.style.display = 'inline-flex';
+                } else {
+                    chatLink.href = "#";
+                    chatLink.style.display = 'none';
+                }
+            }
+
+            // Render images
+            const images = Array.isArray(item.images) ? item.images : (item.images ? [item.images] : []);
+            console.log('Rendering images:', images);
+            renderDetailImages(images);
+
+            // Show modal
+            const modal = document.getElementById('itemDetailModal');
+            if (!modal) {
+                console.error('Modal element #itemDetailModal not found!');
+                alert('Lỗi hệ thống: Không tìm thấy khung modal.');
+                return;
+            }
+
+            console.log('Removing hidden class from modal...');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            console.log('Modal opened.');
+
+        } catch (error) {
+            console.error('Error opening modal:', error);
+            alert('Có lỗi xảy ra khi mở chi tiết: ' + error.message);
+        }
+    };
+
+    function renderDetailImages(images) {
+        const container = document.getElementById('detailImageContainer');
+        const thumbnails = document.getElementById('detailThumbnails');
+        const prevBtn = document.getElementById('prevImageBtn');
+        const nextBtn = document.getElementById('nextImageBtn');
+        const counter = document.getElementById('imageCounter');
+        const currentIndex = document.getElementById('currentImageIndex');
+        const totalImages = document.getElementById('totalImages');
+
+        if (!container) return;
+
+        container.innerHTML = '';
+        thumbnails.innerHTML = '';
+
+        // Filter valid images
+        const validImages = (images || []).filter(img => img && img.trim() !== '');
+
+        if (validImages.length === 0) {
+            container.innerHTML = '<div class="w-full h-full flex items-center justify-center"><i class="fas fa-image text-gray-400 text-6xl"></i></div>';
+            if (prevBtn) prevBtn.classList.add('hidden');
+            if (nextBtn) nextBtn.classList.add('hidden');
+            if (counter) counter.classList.add('hidden');
+            return;
+        }
+
+        // Render main images
+        validImages.forEach((img, index) => {
+            const imgDiv = document.createElement('div');
+            imgDiv.className = 'min-w-full h-full flex items-center justify-center bg-gray-100';
+            const imgElement = document.createElement('img');
+            imgElement.src = img;
+            imgElement.alt = `Image ${index + 1}`;
+            imgElement.className = 'w-full h-full object-contain cursor-zoom-in';
+            imgElement.onclick = () => window.open(img, '_blank');
+            imgDiv.appendChild(imgElement);
+            container.appendChild(imgDiv);
+        });
+
+        // Render thumbnails
+        validImages.forEach((img, index) => {
+            const thumbDiv = document.createElement('div');
+            thumbDiv.className = `flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 cursor-pointer transition-all ${index === 0 ? 'border-orange-500' : 'border-transparent'}`;
+            thumbDiv.onclick = () => goToDetailImage(index);
+            const thumbImg = document.createElement('img');
+            thumbImg.src = img;
+            thumbImg.className = 'w-full h-full object-cover';
+            thumbDiv.appendChild(thumbImg);
+            thumbnails.appendChild(thumbDiv);
+        });
+
+        // Update counter
+        if (totalImages) totalImages.textContent = validImages.length;
+        if (currentIndex) currentIndex.textContent = '1';
+
+        // Show/hide navigation
+        if (validImages.length > 1) {
+            if (prevBtn) prevBtn.classList.remove('hidden');
+            if (nextBtn) nextBtn.classList.remove('hidden');
+            if (counter) counter.classList.remove('hidden');
+        } else {
+            if (prevBtn) prevBtn.classList.add('hidden');
+            if (nextBtn) nextBtn.classList.add('hidden');
+            if (counter) counter.classList.add('hidden');
+        }
+
+        updateDetailImage();
+    }
+
+    function changeDetailImage(direction) {
+        const item = itemsData[currentDetailItemId];
+        if (!item) return;
+        const images = Array.isArray(item.images) ? item.images : (item.images ? [item.images] : []);
+        if (images.length === 0) return;
+
+        currentDetailImageIndex += direction;
+        if (currentDetailImageIndex < 0) currentDetailImageIndex = images.length - 1;
+        else if (currentDetailImageIndex >= images.length) currentDetailImageIndex = 0;
+
+        goToDetailImage(currentDetailImageIndex);
+    }
+
+    function goToDetailImage(index) {
+        const item = itemsData[currentDetailItemId];
+        if (!item) return;
+        const images = Array.isArray(item.images) ? item.images : (item.images ? [item.images] : []);
+
+        currentDetailImageIndex = index;
+        updateDetailImage();
+    }
+
+    function updateDetailImage() {
+        const container = document.getElementById('detailImageContainer');
+        const thumbnails = document.getElementById('detailThumbnails');
+        const currentIndex = document.getElementById('currentImageIndex');
+
+        if (!container) return;
+
+        container.style.transform = `translateX(-${currentDetailImageIndex * 100}%)`;
+
+        if (thumbnails) {
+            const thumbElements = thumbnails.querySelectorAll('div');
+            thumbElements.forEach((thumb, index) => {
+                if (index === currentDetailImageIndex) {
+                    thumb.classList.remove('border-transparent');
+                    thumb.classList.add('border-orange-500');
+                } else {
+                    thumb.classList.remove('border-orange-500');
+                    thumb.classList.add('border-transparent');
+                }
+            });
+        }
+
+        if (currentIndex) currentIndex.textContent = currentDetailImageIndex + 1;
+    }
+
+    window.closeItemDetailModal = function () {
+        const modal = document.getElementById('itemDetailModal');
+        if (modal) modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    };
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function (e) {
+        const modal = document.getElementById('itemDetailModal');
+        if (modal && !modal.classList.contains('hidden')) {
+            if (e.key === 'Escape') window.closeItemDetailModal();
+            else if (e.key === 'ArrowLeft') changeDetailImage(-1);
+            else if (e.key === 'ArrowRight') changeDetailImage(1);
+        }
+    });
+
     function openContactModal(title, location, contact, username, userId) {
+        console.log('%copenContactModal called', 'background: orange; color: black');
+        console.log('Params:', { title, location, contact, username, userId });
+
+        const modal = document.getElementById('contactModal');
+        if (!modal) {
+            console.error('Contact Modal element not found!');
+            return;
+        }
+
         document.getElementById('modalItemTitle').textContent = title;
         document.getElementById('modalItemLocation').textContent = location;
         document.getElementById('modalContactInfo').textContent = contact;
 
         const chatLink = document.getElementById('modalChatLink');
-        if (chatLink) {
-            chatLink.href = "/chat/" + userId;
-        }
+        if (chatLink) chatLink.href = "/chat/" + userId;
 
-        document.getElementById('contactModal').classList.remove('hidden');
+        modal.classList.remove('hidden');
     }
+
+    window.openContactModal = openContactModal;
+
+    function openContactModalFromDetail() {
+        if (!currentDetailItemId) return;
+        const item = itemsData[currentDetailItemId];
+        if (!item) return;
+
+        window.closeItemDetailModal();
+        openContactModal(item.title, item.location, item.contact_info, item.username, item.user_id);
+    }
+
+    window.openContactModalFromDetail = openContactModalFromDetail;
 
     function closeContactModal() {
-        document.getElementById('contactModal').classList.add('hidden');
+        const modal = document.getElementById('contactModal');
+        if (modal) modal.classList.add('hidden');
     }
+
+    window.closeContactModal = closeContactModal;
+
+    function openContactModalById(itemId) {
+        console.log('%copenContactModalById called', 'background: orange; color: black');
+        console.log('itemId:', itemId);
+
+        const item = itemsData[itemId];
+        if (!item) {
+            console.error('Item not found in itemsData');
+            alert('Không tìm thấy thông tin liên hệ.');
+            return;
+        }
+
+        openContactModal(item.title, item.location, item.contact_info, item.username, item.user_id);
+    }
+    window.openContactModalById = openContactModalById;
+
+    // Attach Listeners Function
+    function attachItemCardListeners() {
+        const itemCards = document.querySelectorAll('.item-card');
+        console.log(`%cFound ${itemCards.length} item cards to attach listeners`, 'color: orange; font-weight: bold');
+
+        itemCards.forEach(function (card, index) {
+            if (card.getAttribute('data-listener-attached') === 'true') {
+                console.log(`Card ${index} already has listener.`);
+                return;
+            }
+
+            card.setAttribute('data-listener-attached', 'true');
+            const itemId = card.getAttribute('data-item-id');
+            console.log(`Attaching listener to Card ${index}, ID: ${itemId}`);
+
+            card.addEventListener('click', function (e) {
+                console.log('%c=== CARD CLICKED ===', 'background: blue; color: white');
+                console.log('Target:', e.target);
+
+                // Check if clicked on contact button or its children
+                if (e.target.closest('button[onclick*="openContactModal"]') || e.target.closest('.contact-btn')) {
+                    console.log('Clicked on contact button, ignoring card click');
+                    return;
+                }
+
+                const itemId = this.getAttribute('data-item-id');
+                console.log('Card Item ID:', itemId);
+
+                if (itemId) {
+                    window.openItemDetailModal(itemId);
+                } else {
+                    console.error('No Item ID found on card!');
+                }
+            });
+        });
+    }
+
+    // Run on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('%cDOM Content Loaded', 'color: green; font-weight: bold');
+        attachItemCardListeners();
+    });
+
+    // Run immediately if already loaded
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        console.log('%cDocument already ready, running attach immediately', 'color: green');
+        attachItemCardListeners();
+    }
+
+    console.log('%c=== SCRIPT BLOCK ENDED ===', 'background: #222; color: #bada55');
 </script>
 {% endblock %}
