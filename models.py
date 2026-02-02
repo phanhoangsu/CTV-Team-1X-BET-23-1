@@ -46,3 +46,4 @@ class ActionLog(db.Model):
     details = db.Column(db.Text, nullable=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', backref=db.backref('logs', lazy=True))
+

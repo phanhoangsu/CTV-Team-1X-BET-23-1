@@ -13,6 +13,28 @@ import json
 from pydantic import BaseModel, Field, field_validator, ValidationError
 from enum import Enum
 from typing import Optional, List
+from datetime import timezone, timedelta
+
+
+# múi giờ 
+
+def to_vn_time(dt):
+    if not dt:
+        return None
+
+    vn_tz = timezone(timedelta(hours=7))
+
+    # Nếu datetime KHÔNG có tzinfo → coi là UTC
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+
+    return dt.astimezone(vn_tz)
+
+
+
+
+
+# không an toàn 
 
 cloudinary.config( 
   cloud_name = "dbpqjnu0o", 
@@ -93,6 +115,7 @@ class PostCreateSchema(BaseModel):
         return v
 
 app = Flask(__name__)
+app.jinja_env.globals.update(to_vn_time=to_vn_time)
 app.config['SECRET_KEY'] = 'dev_key_secret' # Change in production
 basedir = os.path.abspath(os.path.dirname(__file__))
 db_path = os.path.join(basedir, 'instance', 'flostfound.db')
@@ -240,6 +263,42 @@ def post_item():
         
     return render_template('post_item.html')
 
+# lấy tất cả bài 
+@app.route('/api/getAll', methods=['GET'])
+def api_get_posts():
+    items = Item.query.all()
+
+    result = []
+    for item in items:
+        result.append({
+            "id": item.id,
+            "title": item.title,
+            "description": item.description,
+            "location": item.location,
+            "type": item.item_type
+        })
+
+    return jsonify(result)
+
+# lấy bài theo id
+@app.route('/api/get/<int:id>', methods=['GET'])
+def api_get_post_by_id(id):
+    item = Item.query.get(id)
+
+    if not item:
+        return jsonify({"error": "Không tìm thấy bài"}), 404
+
+    result = {
+        "id": item.id,
+        "title": item.title,
+        "description": item.description,
+        "location": item.location,
+        "type": item.item_type
+    }
+
+    return jsonify(result)
+
+
 @app.route('/api/upload', methods=['POST'])
 @login_required
 def upload_file():
@@ -330,6 +389,8 @@ def upload_file():
         return jsonify({'url': upload_result['secure_url']})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
 
 @app.route('/api/posts', methods=['POST'])
 @login_required

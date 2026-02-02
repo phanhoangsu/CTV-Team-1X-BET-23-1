@@ -43,25 +43,39 @@ const PostModal = () => {
 
     const handleImageUpload = async (e) => {
         const files = Array.from(e.target.files);
-        if (!files.length) return;
+        if (files.length === 0) return;
 
-        // Validation Loop
+        // Validate all files first
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'jfif'];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        
         const validFiles = [];
+        const invalidFiles = [];
+
         for (const file of files) {
-            // Check size (5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                alert(`File "${file.name}" quá lớn, tối đa 5MB thôi Sử ơi!`);
+            const fileName = file.name.toLowerCase().trim();
+            const lastDotIndex = fileName.lastIndexOf('.');
+            const fileExt = lastDotIndex > 0 ? fileName.substring(lastDotIndex + 1).trim() : '';
+            
+            const isValidMimeType = file.type && (allowedTypes.includes(file.type) || file.type.startsWith('image/'));
+            const isValidExtension = fileExt && allowedExtensions.includes(fileExt);
+            
+            if (!isValidMimeType && !isValidExtension) {
+                invalidFiles.push(file.name);
                 continue;
             }
-
-            // Check type
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-            if (!allowedTypes.includes(file.type) && !file.type.startsWith('image/')) {
-                alert(`File "${file.name}" không đúng định dạng ảnh rồi Sử ơi.`);
+            
+            if (file.size > maxSize) {
+                invalidFiles.push(file.name + ' (quá lớn)');
                 continue;
             }
-
+            
             validFiles.push(file);
+        }
+
+        if (invalidFiles.length > 0) {
+            alert('Một số file không hợp lệ:\n' + invalidFiles.join('\n') + '\n\nChỉ chấp nhận file ảnh: JPG, PNG, GIF, WEBP (tối đa 5MB)');
         }
 
         if (validFiles.length === 0) {
@@ -69,36 +83,49 @@ const PostModal = () => {
             return;
         }
 
+        // Upload all valid files in parallel
         setUploading(true);
-
-        // Upload in parallel
-        try {
-            const uploadPromises = validFiles.map(async (file) => {
-                const data = new FormData();
-                data.append('file', file);
-                
+        const uploadPromises = validFiles.map(async (file) => {
+            const data = new FormData();
+            data.append('file', file);
+            
+            try {
                 const res = await fetch('/api/upload', {
                     method: 'POST',
                     body: data
                 });
                 const result = await res.json();
-                if (!result.url) throw new Error(result.error || 'Upload failed');
-                return result.url;
-            });
+                if (result.url) {
+                    return result.url;
+                } else {
+                    throw new Error(result.error || 'Upload thất bại');
+                }
+            } catch (err) {
+                console.error('Upload error for', file.name, err);
+                return null;
+            }
+        });
 
+        try {
             const uploadedUrls = await Promise.all(uploadPromises);
+            const successfulUrls = uploadedUrls.filter(url => url !== null);
             
-            setFormData(prev => ({
-                ...prev,
-                images: [...prev.images, ...uploadedUrls]
-            }));
+            if (successfulUrls.length > 0) {
+                setFormData(prev => ({
+                    ...prev,
+                    images: [...prev.images, ...successfulUrls]
+                }));
+            }
             
+            if (successfulUrls.length < validFiles.length) {
+                alert(`Đã upload ${successfulUrls.length}/${validFiles.length} ảnh thành công.`);
+            }
         } catch (err) {
             console.error(err);
-            alert('Có lỗi khi upload ảnh: ' + err.message);
+            alert('Lỗi upload ảnh.');
         } finally {
             setUploading(false);
-            e.target.value = ''; // Reset input to allow re-selecting same files
+            e.target.value = ''; // Reset input để có thể chọn lại cùng file
         }
     };
 
@@ -452,11 +479,11 @@ const PostModal = () => {
                                                     <i className="fas fa-camera text-gray-400 text-3xl mb-3"></i>
                                                     <div className="flex text-sm text-gray-600 justify-center">
                                                         <label className="relative cursor-pointer bg-white rounded-md font-medium text-orange-600 hover:text-orange-500 focus-within:outline-none">
-                                                            <span>Tải ảnh lên (Chọn nhiều)</span>
-                                                            <input type="file" multiple className="sr-only" accept="image/*" onChange={handleImageUpload} />
+                                                            <span>Tải ảnh lên</span>
+                                                            <input type="file" className="sr-only" accept="image/*" multiple onChange={handleImageUpload} />
                                                         </label>
                                                     </div>
-                                                    <p className="text-xs text-gray-500">PNG, JPG, GIF tối đa 5MB</p>
+                                                    <p className="text-xs text-gray-500">PNG, JPG, GIF tối đa 5MB (có thể chọn nhiều ảnh)</p>
                                                 </>
                                             )}
                                         </div>
