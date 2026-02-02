@@ -8,6 +8,9 @@ from ai_service import ai_detector
 import os
 from datetime import datetime
 
+# ==============================================================================
+# FLASK APP INITIALIZATION
+# ==============================================================================
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'dev_key_secret' # Change in production
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///flostfound.db'
@@ -18,6 +21,15 @@ login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
 socketio = SocketIO(app)
+
+# ==============================================================================
+# BLUEPRINT REGISTRATION - Đăng ký các module tính năng
+# ==============================================================================
+# Import và đăng ký Blueprint cho tính năng Discovery & Filter
+# File: discovery.py - Tính năng tìm kiếm và lọc nâng cao
+from discovery import discovery_bp
+app.register_blueprint(discovery_bp)
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -280,6 +292,13 @@ def admin_dashboard():
 def admin_posts():
     items = Item.query.order_by(Item.date_posted.desc()).all()
     return render_template('admin_posts.html', items=items)
+
+@app.route('/admin/logs')
+@login_required
+@admin_required
+def admin_logs():
+    logs = ActionLog.query.order_by(ActionLog.timestamp.desc()).all()
+    return render_template('admin_logs.html', logs=logs)
 
 # ... existing admin routes ...
 
