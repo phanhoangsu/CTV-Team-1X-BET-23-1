@@ -1,0 +1,538 @@
+<!-- ===========================================================================
+DISCOVERY PAGE - Trang Khám Phá & Tìm Kiếm
+============================================================================
+File: templates/discover.html
+Mô tả: Giao diện newsfeed với bộ lọc nâng cao
+
+Tính năng:
+  - Search bar: Tìm kiếm theo từ khóa
+  - Advanced Filter: Lọc theo loại tin, danh mục, khu vực, thời gian
+  - Cards: Hiển thị tin dạng thẻ với màu sắc phân biệt Lost/Found
+  - Pagination: Phân trang
+
+Author: Team 1X-BET-23-1
+Created: 2026-02-02
+============================================================================ -->
+
+{% extends "base.html" %}
+
+{% block content %}
+<!-- =====================================================================
+     HEADER SECTION - Tiêu đề và Search Bar
+     ===================================================================== -->
+<div class="mb-8">
+    <div class="text-center mb-6">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">
+            <i class="fas fa-compass text-orange-500 mr-2"></i>Khám Phá
+        </h1>
+        <p class="text-gray-600">Tìm kiếm và lọc tin đồ thất lạc theo nhu cầu của bạn</p>
+    </div>
+
+    <!-- =====================================================================
+         SEARCH BAR - Thanh tìm kiếm
+         ===================================================================== -->
+    <form id="filterForm" action="{{ url_for('discovery.discover') }}" method="GET" 
+          class="max-w-3xl mx-auto">
+        <div class="flex shadow-lg rounded-xl overflow-hidden bg-white border border-gray-200">
+            <input 
+                type="text" 
+                name="q" 
+                value="{{ current_filters.q }}"
+                placeholder="Tìm kiếm (Ví dụ: iPhone 13 màu hồng, ví da đen...)"
+                class="flex-grow px-6 py-4 border-none focus:outline-none text-gray-700"
+            >
+            <button 
+                type="submit" 
+                class="bg-orange-600 text-white px-8 font-bold hover:bg-orange-700 transition flex items-center"
+            >
+                <i class="fas fa-search mr-2"></i> Tìm
+            </button>
+        </div>
+        
+        <!-- Hidden inputs để giữ các filter khác khi search -->
+        <input type="hidden" name="item_type" value="{{ current_filters.item_type }}">
+        <input type="hidden" name="category" value="{{ current_filters.category }}">
+        <input type="hidden" name="location" value="{{ current_filters.location }}">
+        <input type="hidden" name="date_from" value="{{ current_filters.date_from }}">
+        <input type="hidden" name="date_to" value="{{ current_filters.date_to }}">
+    </form>
+</div>
+
+<!-- =====================================================================
+     MAIN CONTENT - Filter Sidebar + Cards Grid
+     ===================================================================== -->
+<div class="flex flex-col lg:flex-row gap-6">
+
+    <!-- =====================================================================
+         FILTER SIDEBAR - Bộ lọc nâng cao
+         ===================================================================== -->
+    <aside class="lg:w-72 flex-shrink-0">
+        <div class="bg-white rounded-xl shadow-lg p-6 sticky top-24">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-filter text-orange-500 mr-2"></i> Bộ Lọc Nâng Cao
+            </h3>
+            
+            <form id="advancedFilterForm" action="{{ url_for('discovery.discover') }}" method="GET">
+                <!-- Giữ từ khóa search -->
+                <input type="hidden" name="q" value="{{ current_filters.q }}">
+                
+                <!-- =========================================================
+                     FILTER: Loại tin (Lost/Found)
+                     ========================================================= -->
+                <div class="mb-5">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-tag mr-1"></i> Loại Tin
+                    </label>
+                    <div class="space-y-2">
+                        <label class="flex items-center cursor-pointer group">
+                            <input 
+                                type="radio" 
+                                name="item_type" 
+                                value="" 
+                                {{ 'checked' if not current_filters.item_type }}
+                                class="form-radio text-orange-600 focus:ring-orange-500"
+                            >
+                            <span class="ml-2 text-gray-700 group-hover:text-orange-600">Tất cả</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer group">
+                            <input 
+                                type="radio" 
+                                name="item_type" 
+                                value="Lost" 
+                                {{ 'checked' if current_filters.item_type == 'Lost' }}
+                                class="form-radio text-red-600 focus:ring-red-500"
+                            >
+                            <span class="ml-2 text-gray-700 group-hover:text-red-600">
+                                <i class="fas fa-exclamation-circle text-red-500 mr-1"></i> Tin Mất
+                            </span>
+                        </label>
+                        <label class="flex items-center cursor-pointer group">
+                            <input 
+                                type="radio" 
+                                name="item_type" 
+                                value="Found" 
+                                {{ 'checked' if current_filters.item_type == 'Found' }}
+                                class="form-radio text-green-600 focus:ring-green-500"
+                            >
+                            <span class="ml-2 text-gray-700 group-hover:text-green-600">
+                                <i class="fas fa-check-circle text-green-500 mr-1"></i> Tin Nhặt
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- =========================================================
+                     FILTER: Danh mục
+                     ========================================================= -->
+                <div class="mb-5">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-boxes mr-1"></i> Danh Mục
+                    </label>
+                    <select 
+                        name="category" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    >
+                        <option value="">-- Tất cả danh mục --</option>
+                        {% for cat in categories %}
+                        <option 
+                            value="{{ cat.value }}" 
+                            {{ 'selected' if current_filters.category == cat.value }}
+                        >{{ cat.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- =========================================================
+                     FILTER: Khu vực
+                     ========================================================= -->
+                <div class="mb-5">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-map-marker-alt mr-1"></i> Khu Vực
+                    </label>
+                    <select 
+                        name="location" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    >
+                        <option value="">-- Tất cả khu vực --</option>
+                        {% for loc in locations %}
+                        <option 
+                            value="{{ loc.value }}" 
+                            {{ 'selected' if current_filters.location == loc.value }}
+                        >{{ loc.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- =========================================================
+                     FILTER: Khoảng thời gian
+                     ========================================================= -->
+                <div class="mb-5">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-calendar-alt mr-1"></i> Thời Gian
+                    </label>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="text-xs text-gray-500">Từ ngày</label>
+                            <input 
+                                type="date" 
+                                name="date_from" 
+                                value="{{ current_filters.date_from }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            >
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500">Đến ngày</label>
+                            <input 
+                                type="date" 
+                                name="date_to" 
+                                value="{{ current_filters.date_to }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- =========================================================
+                     FILTER BUTTONS
+                     ========================================================= -->
+                <div class="flex gap-2">
+                    <button 
+                        type="submit" 
+                        class="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 transition font-semibold"
+                    >
+                        <i class="fas fa-search mr-1"></i> Lọc
+                    </button>
+                    <a 
+                        href="{{ url_for('discovery.discover') }}" 
+                        class="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition font-semibold text-center"
+                    >
+                        <i class="fas fa-undo mr-1"></i> Xóa lọc
+                    </a>
+                </div>
+            </form>
+
+            <!-- =========================================================
+                 STATISTICS - Thống kê nhanh
+                 ========================================================= -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <h4 class="text-sm font-semibold text-gray-600 mb-3">Thống Kê</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-red-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-red-600">{{ total_lost }}</div>
+                        <div class="text-xs text-red-500">Tin Mất</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-green-600">{{ total_found }}</div>
+                        <div class="text-xs text-green-500">Tin Nhặt</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- =====================================================================
+         CARDS GRID - Danh sách tin dạng thẻ
+         ===================================================================== -->
+    <main class="flex-1">
+        <!-- Active Filters Tags - Hiển thị các filter đang áp dụng -->
+        {% if current_filters.q or current_filters.item_type or current_filters.category or current_filters.location or current_filters.date_from or current_filters.date_to %}
+        <div class="mb-4 flex flex-wrap gap-2 items-center">
+            <span class="text-sm text-gray-500">Đang lọc:</span>
+            {% if current_filters.q %}
+            <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                <i class="fas fa-search mr-1"></i> "{{ current_filters.q }}"
+            </span>
+            {% endif %}
+            {% if current_filters.item_type %}
+            <span class="{% if current_filters.item_type == 'Lost' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %} px-3 py-1 rounded-full text-sm">
+                {{ 'Tin Mất' if current_filters.item_type == 'Lost' else 'Tin Nhặt' }}
+            </span>
+            {% endif %}
+            {% if current_filters.category %}
+            <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
+                {{ current_filters.category }}
+            </span>
+            {% endif %}
+            {% if current_filters.location %}
+            <span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm">
+                <i class="fas fa-map-marker-alt mr-1"></i> {{ current_filters.location }}
+            </span>
+            {% endif %}
+            {% if current_filters.date_from or current_filters.date_to %}
+            <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
+                <i class="fas fa-calendar mr-1"></i> 
+                {{ current_filters.date_from or '...' }} → {{ current_filters.date_to or '...' }}
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Results Count -->
+        <div class="mb-4 text-sm text-gray-500">
+            Tìm thấy <strong class="text-gray-800">{{ pagination.total }}</strong> kết quả
+            {% if pagination.pages > 1 %}
+            (Trang {{ pagination.page }}/{{ pagination.pages }})
+            {% endif %}
+        </div>
+
+        <!-- =========================================================
+             ITEMS GRID - Lưới thẻ tin
+             ========================================================= -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+            {% for item in items %}
+            <!-- =====================================================
+                 ITEM CARD - Thẻ tin
+                 Màu sắc phân biệt:
+                 - Lost (Mất): Viền đỏ, badge đỏ
+                 - Found (Nhặt): Viền xanh lá, badge xanh
+                 ===================================================== -->
+            <div class="
+                bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 
+                overflow-hidden flex flex-col
+                {% if item.item_type == 'Lost' %}
+                    border-l-4 border-red-500 hover:border-red-600
+                {% else %}
+                    border-l-4 border-green-500 hover:border-green-600
+                {% endif %}
+            ">
+                <div class="p-5 flex-grow">
+                    <!-- Header: Badge + Time -->
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="
+                            inline-flex items-center px-3 py-1 rounded-full text-xs font-bold
+                            {% if item.item_type == 'Lost' %}
+                                bg-red-100 text-red-600
+                            {% else %}
+                                bg-green-100 text-green-600
+                            {% endif %}
+                        ">
+                            {% if item.item_type == 'Lost' %}
+                                <i class="fas fa-exclamation-circle mr-1"></i> Đã Mất
+                            {% else %}
+                                <i class="fas fa-hand-holding mr-1"></i> Đã Nhặt
+                            {% endif %}
+                        </span>
+                        <span class="text-gray-400 text-xs flex items-center">
+                            <i class="far fa-clock mr-1"></i>
+                            {{ item.date_posted.strftime('%d/%m/%Y %H:%M') }}
+                        </span>
+                    </div>
+
+                    <!-- Title -->
+                    <h3 class="text-lg font-bold text-gray-800 mb-2 line-clamp-1">
+                        {{ item.title }}
+                    </h3>
+
+                    <!-- Description -->
+                    <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                        {{ item.description }}
+                    </p>
+
+                    <!-- Location -->
+                    <div class="flex items-center text-gray-500 text-sm">
+                        <i class="fas fa-map-marker-alt text-orange-500 mr-2"></i>
+                        <span class="truncate">{{ item.location }}</span>
+                    </div>
+                </div>
+
+                <!-- Footer: User + Contact Button -->
+                <div class="px-5 py-4 bg-gray-50 border-t flex justify-between items-center">
+                    <div class="flex items-center space-x-2">
+                        <div class="
+                            w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
+                            {% if item.item_type == 'Lost' %}
+                                bg-red-100 text-red-600
+                            {% else %}
+                                bg-green-100 text-green-600
+                            {% endif %}
+                        ">
+                            {{ item.user.username[0].upper() }}
+                        </div>
+                        <span class="text-sm font-medium text-gray-700">{{ item.user.username }}</span>
+                    </div>
+
+                    <button
+                        onclick="openContactModal('{{ item.title }}', '{{ item.location }}', '{{ item.contact_info }}', '{{ item.user.username }}', '{{ item.user.id }}')"
+                        class="
+                            font-semibold text-sm focus:outline-none transition
+                            {% if item.item_type == 'Lost' %}
+                                text-red-600 hover:text-red-800
+                            {% else %}
+                                text-green-600 hover:text-green-800
+                            {% endif %}
+                        "
+                    >
+                        Liên hệ <i class="fas fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <!-- =====================================================
+                 EMPTY STATE - Không có kết quả
+                 ===================================================== -->
+            <div class="col-span-full text-center py-16">
+                <div class="text-gray-300 text-7xl mb-6">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-600 mb-2">Không tìm thấy kết quả</h3>
+                <p class="text-gray-500 mb-4">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+                <a 
+                    href="{{ url_for('discovery.discover') }}" 
+                    class="inline-block bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition"
+                >
+                    <i class="fas fa-undo mr-2"></i> Xóa tất cả bộ lọc
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- =========================================================
+             PAGINATION - Phân trang
+             ========================================================= -->
+        {% if pagination.pages > 1 %}
+        <nav class="mt-8 flex justify-center">
+            <ul class="flex items-center space-x-1">
+                <!-- Previous Button -->
+                {% if pagination.has_prev %}
+                <li>
+                    <a 
+                        href="{{ url_for('discovery.discover', page=pagination.prev_num, **current_filters) }}"
+                        class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
+                    >
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- Page Numbers -->
+                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == pagination.page %}
+                        <li>
+                            <span class="px-4 py-2 bg-orange-600 text-white rounded-lg font-bold">
+                                {{ page_num }}
+                            </span>
+                        </li>
+                        {% else %}
+                        <li>
+                            <a 
+                                href="{{ url_for('discovery.discover', page=page_num, **current_filters) }}"
+                                class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
+                            >
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li>
+                        <span class="px-2 py-2 text-gray-400">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Next Button -->
+                {% if pagination.has_next %}
+                <li>
+                    <a 
+                        href="{{ url_for('discovery.discover', page=pagination.next_num, **current_filters) }}"
+                        class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
+                    >
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </main>
+</div>
+
+<!-- =====================================================================
+     CONTACT MODAL - Modal liên hệ (giống index.html)
+     ===================================================================== -->
+<div id="contactModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeContactModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fas fa-address-card text-orange-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Thông tin liên hệ</h3>
+                        <div class="mt-4 space-y-3">
+                            <p class="text-sm text-gray-500">Vật phẩm: <span id="modalItemTitle" class="font-bold text-gray-800"></span></p>
+                            <p class="text-sm text-gray-500">Tại: <span id="modalItemLocation" class="font-bold text-gray-800"></span></p>
+                            <div class="bg-gray-100 p-4 rounded-md mt-2">
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Contact / SĐT</label>
+                                <p id="modalContactInfo" class="text-xl font-bold text-orange-600 select-all"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse justify-between items-center">
+                <div class="flex space-x-2">
+                    {% if current_user.is_authenticated %}
+                    <a id="modalChatLink" href="#" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                        <i class="fas fa-comment-dots mr-2 mt-1"></i> Chat Ngay
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Đăng nhập để chat
+                    </a>
+                    {% endif %}
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" onclick="closeContactModal()">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ===========================================================================
+// CONTACT MODAL FUNCTIONS - Xử lý modal liên hệ
+// ===========================================================================
+
+/**
+ * Mở modal liên hệ với thông tin item
+ * @param {string} title - Tiêu đề item
+ * @param {string} location - Vị trí item
+ * @param {string} contact - Thông tin liên hệ
+ * @param {string} username - Tên người đăng
+ * @param {string} userId - ID người đăng
+ */
+function openContactModal(title, location, contact, username, userId) {
+    document.getElementById('modalItemTitle').textContent = title;
+    document.getElementById('modalItemLocation').textContent = location;
+    document.getElementById('modalContactInfo').textContent = contact;
+
+    const chatLink = document.getElementById('modalChatLink');
+    if (chatLink) {
+        chatLink.href = "/chat/" + userId;
+    }
+
+    document.getElementById('contactModal').classList.remove('hidden');
+}
+
+/**
+ * Đóng modal liên hệ
+ */
+function closeContactModal() {
+    document.getElementById('contactModal').classList.add('hidden');
+}
+
+// Đóng modal khi nhấn ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeContactModal();
+    }
+});
+</script>
+{% endblock %}
