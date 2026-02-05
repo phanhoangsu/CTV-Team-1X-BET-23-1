@@ -47,6 +47,13 @@ def before_request():
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
 
+@app.context_processor
+def inject_unread_count():
+    if current_user.is_authenticated:
+        count = Message.query.filter_by(recipient_id=current_user.id, is_read=False).count()
+        return dict(unread_count=count)
+    return dict(unread_count=0)
+
 @app.route('/')
 def index():
     query = request.args.get('q', '').strip()
@@ -150,6 +157,13 @@ def chat(recipient_id):
         ((Message.sender_id == recipient_id) & (Message.recipient_id == current_user.id))
     ).order_by(Message.timestamp.asc()).all()
     
+    # Mark unread messages from this sender as read
+    unread_msgs = Message.query.filter_by(sender_id=recipient_id, recipient_id=current_user.id, is_read=False).all()
+    if unread_msgs:
+        for msg in unread_msgs:
+            msg.is_read = True
+        db.session.commit()
+    
     return render_template('chat.html', recipient=recipient, messages=messages, datetime=datetime)
 
 @app.route('/messages')
@@ -194,7 +208,7 @@ def handle_message(data):
     if not current_user.is_authenticated:
         return
         
-    msg = Message(sender_id=current_user.id, recipient_id=recipient_id, body=body)
+    msg = Message(sender_id=current_user.id, recipient_id=recipient_id, body=body, is_read=False)
     db.session.add(msg)
     db.session.commit()
     
