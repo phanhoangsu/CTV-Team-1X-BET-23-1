@@ -45,7 +45,8 @@
             {% else %}
             <li class="px-6 py-8 text-center text-gray-500">
                 Bạn chưa có tin nhắn nào. <br>
-                <a href="{{ url_for('index') }}" class="text-orange-600 hover:underline">Tìm đồ và liên hệ người đăng
+                <a href="{{ url_for('posts_view.index') }}" class="text-orange-600 hover:underline">Tìm đồ và liên hệ
+                    người đăng
                     tin ngay!</a>
             </li>
             {% endfor %}

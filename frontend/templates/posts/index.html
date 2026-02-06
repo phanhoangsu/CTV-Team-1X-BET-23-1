@@ -7,7 +7,7 @@
     </h1>
     <p class="text-gray-600 mb-8">Kết nối cộng đồng, tìm lại đồ đã mất nhanh chóng.</p>
 
-    <form action="{{ url_for('index') }}" method="GET"
+    <form action="{{ url_for('posts_view.index') }}" method="GET"
         class="max-w-xl mx-auto flex shadow-md rounded-lg overflow-hidden">
         <input type="text" name="q" value="{{ query if query else '' }}"
             placeholder="Tìm kiếm (Chìa khóa, ví, thẻ xe...)"
@@ -61,7 +61,8 @@
     <div class="col-span-full text-center py-12">
         <div class="text-gray-400 text-6xl mb-4"><i class="fas fa-search"></i></div>
         <p class="text-xl text-gray-600">Không tìm thấy tin nào phù hợp.</p>
-        <a href="{{ url_for('post_item') }}" class="text-orange-600 font-bold hover:underline mt-2 inline-block">Đăng
+        <a href="{{ url_for('posts_create.post_item') }}"
+            class="text-orange-600 font-bold hover:underline mt-2 inline-block">Đăng
             tin ngay</a>
     </div>
     {% endfor %}
@@ -111,7 +112,7 @@
                         <i class="fas fa-comment-dots mr-2 mt-1"></i> Chat Ngay
                     </a>
                     {% else %}
-                    <a href="{{ url_for('login') }}"
+                    <a href="{{ url_for('auth_login.login') }}"
                         class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                         Đăng nhập để chat
                     </a>

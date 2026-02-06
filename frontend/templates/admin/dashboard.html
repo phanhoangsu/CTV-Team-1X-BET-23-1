@@ -14,11 +14,11 @@
             <p class="text-gray-500 mt-1">Tổng quan hệ thống và quản lý người dùng</p>
         </div>
         <div class="flex space-x-3">
-            <a href="{{ url_for('admin_posts') }}"
+            <a href="{{ url_for('admin_posts.admin_posts') }}"
                 class="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 hover:text-orange-600 transition shadow-sm hover:shadow">
                 <i class="fas fa-newspaper mr-2"></i>Quản lý Bài đăng
             </a>
-            <a href="{{ url_for('admin_logs') }}"
+            <a href="{{ url_for('admin_logs.admin_logs') }}"
                 class="px-5 py-2.5 bg-gray-800 text-white font-medium rounded-xl hover:bg-gray-900 transition shadow-lg shadow-gray-200">
                 <i class="fas fa-history mr-2"></i>Nhật ký Hoạt động
             </a>
@@ -117,13 +117,13 @@
         <div class="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <h3 class="text-lg font-bold text-gray-800">Danh sách người dùng</h3>
 
-            <form action="{{ url_for('admin_dashboard') }}" method="GET" class="relative">
+            <form action="{{ url_for('admin_dashboard.admin_dashboard') }}" method="GET" class="relative">
                 <input type="text" name="q" value="{{ search_query }}"
                     class="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm w-full md:w-64 transition"
                     placeholder="Tìm kiếm user...">
                 <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
                 {% if search_query %}
-                <a href="{{ url_for('admin_dashboard') }}"
+                <a href="{{ url_for('admin_dashboard.admin_dashboard') }}"
                     class="absolute right-2 top-2 text-gray-400 hover:text-red-500">
                     <i class="fas fa-times"></i>
                 </a>

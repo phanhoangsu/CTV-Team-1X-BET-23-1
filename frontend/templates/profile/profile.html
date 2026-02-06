@@ -22,7 +22,7 @@
                 </div>
             </div>
 
-            <form action="{{ url_for('profile') }}" method="POST" class="max-w-2xl">
+            <form action="{{ url_for('profile.profile') }}" method="POST" class="max-w-2xl">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
@@ -62,7 +62,7 @@
                             <span class="text-xs text-gray-400 mt-2 block">{{ item.date_posted.strftime('%d/%m/%Y')
                                 }}</span>
                         </div>
-                        <form action="{{ url_for('delete_post', item_id=item.id) }}" method="POST"
+                        <form action="{{ url_for('posts_delete.delete_post', item_id=item.id) }}" method="POST"
                             onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này không?');">
                             <button type="submit" class="text-gray-400 hover:text-red-500 p-2 transition"
                                 title="Xóa / Đã tìm thấy">
@@ -92,7 +92,7 @@
                             <span class="text-xs text-gray-400 mt-2 block">{{ item.date_posted.strftime('%d/%m/%Y')
                                 }}</span>
                         </div>
-                        <form action="{{ url_for('delete_post', item_id=item.id) }}" method="POST"
+                        <form action="{{ url_for('posts_delete.delete_post', item_id=item.id) }}" method="POST"
                             onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này không?');">
                             <button type="submit" class="text-gray-400 hover:text-red-500 p-2 transition"
                                 title="Xóa / Đã trả lại">
