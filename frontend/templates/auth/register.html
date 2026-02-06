@@ -3,7 +3,7 @@
 {% block content %}
 <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg mt-10">
     <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Đăng Ký Tài Khoản</h2>
-    <form method="POST" action="{{ url_for('register') }}">
+    <form method="POST" action="{{ url_for('auth_register.register') }}">
         <div class="mb-4">
             <label class="block text-gray-700 text-sm font-bold mb-2">Tên đăng nhập</label>
             <input type="text" name="username" required
@@ -25,7 +25,8 @@
         </button>
     </form>
     <p class="mt-4 text-center text-sm text-gray-600">
-        Đã có tài khoản? <a href="{{ url_for('login') }}" class="text-orange-600 hover:underline">Đăng nhập</a>
+        Đã có tài khoản? <a href="{{ url_for('auth_login.login') }}" class="text-orange-600 hover:underline">Đăng
+            nhập</a>
     </p>
 </div>
 {% endblock %}
