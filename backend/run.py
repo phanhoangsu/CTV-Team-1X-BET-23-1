@@ -1,6 +1,12 @@
 """
 Application entry point for F-LostFound
 """
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 from app import create_app, socketio
 from app.extensions import db
 from app.services.ai_trainer import refresh_ai_model
