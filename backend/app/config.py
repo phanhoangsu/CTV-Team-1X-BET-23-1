@@ -13,14 +13,23 @@ class Config:
     INSTANCE_DIR = os.path.join(os.path.dirname(BASE_DIR), 'instance')
     
     # Database - PostgreSQL only
+    # Database - PostgreSQL only
     # Render provides DATABASE_URL environment variable
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    database_url = os.environ.get('DATABASE_URL')
     
-    if not SQLALCHEMY_DATABASE_URI:
+    if not database_url:
         raise ValueError(
             "DATABASE_URL environment variable is required. "
             "Please set it to your PostgreSQL connection string."
         )
+
+    # Force using psycopg 3 driver
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif database_url.startswith("postgresql://"):
+        database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+        
+    SQLALCHEMY_DATABASE_URI = database_url
 
 class DevelopmentConfig(Config):
     """Development configuration"""
