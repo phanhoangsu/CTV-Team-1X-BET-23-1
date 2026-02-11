@@ -20,3 +20,15 @@ def register_hooks(app):
         if current_user.is_authenticated:
             current_user.last_seen = datetime.utcnow()
             db.session.commit()
+
+    @app.context_processor
+    def inject_unread_count():
+        """Inject unread message count into all templates"""
+        if current_user.is_authenticated:
+            # Import here to avoid circular imports if necessary, or check if top-level works
+            from app.models.message import Message 
+            count = Message.query.filter_by(recipient_id=current_user.id, is_read=False).count()
+            return dict(unread_count=count)
+        return dict(unread_count=0)
+
+

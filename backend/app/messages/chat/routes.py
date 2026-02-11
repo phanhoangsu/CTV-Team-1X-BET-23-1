@@ -19,4 +19,15 @@ def chat(recipient_id):
         ((Message.sender_id == recipient_id) & (Message.recipient_id == current_user.id))
     ).order_by(Message.timestamp.asc()).all()
     
+    # Mark unread messages from this sender as read
+    unread_msgs = Message.query.filter_by(sender_id=recipient_id, recipient_id=current_user.id, is_read=False).all()
+    if unread_msgs:
+        for msg in unread_msgs:
+            msg.is_read = True
+        try:
+            from app.extensions import db
+            db.session.commit()
+        except:
+             db.session.rollback()
+    
     return render_template('messages/chat.html', recipient=recipient, messages=messages, datetime=datetime)
