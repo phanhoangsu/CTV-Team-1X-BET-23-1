@@ -56,19 +56,25 @@
                 {% for item in lost_items %}
                 <div class="group bg-gray-50 p-4 rounded-xl border border-gray-100 hover:shadow-md transition">
                     <div class="flex justify-between items-start">
-                        <div>
+                        <div class="flex-1">
                             <h3 class="font-bold text-gray-800">{{ item.title }}</h3>
                             <p class="text-sm text-gray-500 mt-1 line-clamp-2">{{ item.description }}</p>
                             <span class="text-xs text-gray-400 mt-2 block">{{ item.date_posted.strftime('%d/%m/%Y')
                                 }}</span>
                         </div>
-                        <form action="{{ url_for('posts_delete.delete_post', item_id=item.id) }}" method="POST"
-                            onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này không?');">
-                            <button type="submit" class="text-gray-400 hover:text-red-500 p-2 transition"
-                                title="Xóa / Đã tìm thấy">
-                                <i class="fas fa-trash-alt"></i>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="openEditModal({{ item.id }})"
+                                class="text-gray-400 hover:text-blue-500 p-2 transition" title="Chỉnh sửa">
+                                <i class="fas fa-edit"></i>
                             </button>
-                        </form>
+                            <form action="{{ url_for('posts_delete.delete_post', item_id=item.id) }}" method="POST"
+                                onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này không?');">
+                                <button type="submit" class="text-gray-400 hover:text-red-500 p-2 transition"
+                                    title="Xóa / Đã tìm thấy">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
                 {% else %}
@@ -86,19 +92,25 @@
                 {% for item in found_items %}
                 <div class="group bg-gray-50 p-4 rounded-xl border border-gray-100 hover:shadow-md transition">
                     <div class="flex justify-between items-start">
-                        <div>
+                        <div class="flex-1">
                             <h3 class="font-bold text-gray-800">{{ item.title }}</h3>
                             <p class="text-sm text-gray-500 mt-1 line-clamp-2">{{ item.description }}</p>
                             <span class="text-xs text-gray-400 mt-2 block">{{ item.date_posted.strftime('%d/%m/%Y')
                                 }}</span>
                         </div>
-                        <form action="{{ url_for('posts_delete.delete_post', item_id=item.id) }}" method="POST"
-                            onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này không?');">
-                            <button type="submit" class="text-gray-400 hover:text-red-500 p-2 transition"
-                                title="Xóa / Đã trả lại">
-                                <i class="fas fa-trash-alt"></i>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="openEditModal({{ item.id }})"
+                                class="text-gray-400 hover:text-blue-500 p-2 transition" title="Chỉnh sửa">
+                                <i class="fas fa-edit"></i>
                             </button>
-                        </form>
+                            <form action="{{ url_for('posts_delete.delete_post', item_id=item.id) }}" method="POST"
+                                onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này không?');">
+                                <button type="submit" class="text-gray-400 hover:text-red-500 p-2 transition"
+                                    title="Xóa / Đã trả lại">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
                 {% else %}
@@ -109,4 +121,8 @@
     </div>
 
 </div>
+
+<!-- Include Edit Modal -->
+{% include 'profile/edit_modal.html' %}
+
 {% endblock %}

@@ -1,0 +1,363 @@
+<!-- Detail Modal -->
+<div id="detailModal" class="fixed inset-0 z-50 hidden overflow-y-auto" role="dialog" aria-modal="true">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-900 bg-opacity-80 transition-opacity backdrop-filter backdrop-blur-sm"
+        onclick="closeDetailModal()"></div>
+
+    <!-- Modal Panel -->
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+
+        <div
+            class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full">
+
+            <!-- Close Button (Absolute) -->
+            <button type="button" onclick="closeDetailModal()"
+                class="absolute top-4 right-4 z-20 text-gray-600 hover:text-gray-900 bg-white/90 hover:bg-white rounded-full p-2 transition shadow-lg">
+                <i class="fas fa-times text-xl w-6 h-6 flex items-center justify-center"></i>
+            </button>
+
+            <!-- Grid Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 min-h-[600px] bg-white rounded-2xl overflow-hidden">
+
+                <!-- Left: Image Gallery (Dark Bg) -->
+                <div class="bg-gray-900 relative flex flex-col justify-center items-center group rounded-l-2xl">
+                    <img id="detailMainImage" src="" alt="Lost Item"
+                        class="max-h-[600px] w-full object-contain transition-transform duration-300">
+
+                    <!-- Previous Button -->
+                    <button id="prevImageBtn" onclick="navigateImage(-1)"
+                        class="hidden absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white rounded-full w-12 h-12 flex items-center justify-center transition backdrop-blur-md z-10 shadow-lg">
+                        <i class="fas fa-chevron-left text-lg"></i>
+                    </button>
+
+                    <!-- Next Button -->
+                    <button id="nextImageBtn" onclick="navigateImage(1)"
+                        class="hidden absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white rounded-full w-12 h-12 flex items-center justify-center transition backdrop-blur-md z-10 shadow-lg">
+                        <i class="fas fa-chevron-right text-lg"></i>
+                    </button>
+
+                    <!-- Image Counter -->
+                    <div id="imageCounter"
+                        class="hidden absolute top-4 left-4 bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium backdrop-blur-md shadow-lg">
+                        <span id="currentImageIndex">1</span> / <span id="totalImages">1</span>
+                    </div>
+
+                    <!-- Thumbnails Strip -->
+                    <div id="detailImageStrip"
+                        class="absolute bottom-6 left-0 right-0 flex justify-center space-x-3 px-4 overflow-x-auto py-2">
+                        <!-- Thumbnails injected by JS -->
+                    </div>
+
+                    <!-- No Image Placeholder -->
+                    <div id="detailNoImage"
+                        class="hidden flex-col items-center justify-center text-gray-400 h-full w-full bg-gray-100">
+                        <i class="fas fa-image text-6xl mb-4 opacity-30"></i>
+                        <span class="font-medium text-lg">Không có hình ảnh</span>
+                    </div>
+                </div>
+
+                <!-- Right: Details & Actions -->
+                <div class="flex flex-col h-full bg-white relative rounded-r-2xl">
+
+                    <div class="p-8 flex-grow overflow-y-auto">
+                        <!-- Top Meta -->
+                        <div class="flex justify-between items-start mb-4">
+                            <span id="detailBadge"
+                                class="bg-orange-100 text-orange-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-2 inline-block">
+                                --
+                            </span>
+                            <span class="text-xs text-gray-400 font-mono" id="detailDate">Just now</span>
+                        </div>
+
+                        <!-- Title -->
+                        <h2 class="text-2xl font-extrabold text-gray-900 mb-6 leading-tight" id="detailTitle">
+                            Loading...
+                        </h2>
+
+                        <!-- Info Grid -->
+                        <div class="grid grid-cols-2 gap-y-6 gap-x-4 mb-8">
+                            <!-- Incident Date -->
+                            <div class="flex items-start space-x-3">
+                                <div class="bg-blue-50 text-blue-600 p-2 rounded-lg">
+                                    <i class="far fa-calendar-alt text-lg"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase font-bold">Thời gian</p>
+                                    <p class="text-sm font-semibold text-gray-800" id="detailIncidentDate">--</p>
+                                </div>
+                            </div>
+                            <!-- Location -->
+                            <div class="flex items-start space-x-3">
+                                <div class="bg-red-50 text-red-600 p-2 rounded-lg">
+                                    <i class="fas fa-map-marker-alt text-lg"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase font-bold">Khu vực</p>
+                                    <p class="text-sm font-semibold text-gray-800 truncate" id="detailLocation">--</p>
+                                </div>
+                            </div>
+                            <!-- Category -->
+                            <div class="flex items-start space-x-3">
+                                <div class="bg-purple-50 text-purple-600 p-2 rounded-lg">
+                                    <i class="fas fa-tag text-lg"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase font-bold">Danh mục</p>
+                                    <p class="text-sm font-semibold text-gray-800" id="detailCategory">--</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 flex items-center">
+                                <i class="fas fa-align-left mr-2"></i>Mô tả chi tiết
+                            </h4>
+                            <p class="text-gray-700 text-sm leading-relaxed whitespace-pre-line" id="detailDescription">
+                                --
+                            </p>
+                        </div>
+
+                        <!-- User Actions (Chat/Call) -->
+                        <div id="viewerActions" class="hidden space-y-3">
+                            <div
+                                class="p-4 rounded-xl border-2 border-dashed border-gray-200 flex justify-between items-center bg-white hover:border-orange-200 transition">
+                                <div>
+                                    <p class="text-xs text-gray-400 font-bold uppercase">Người đăng</p>
+                                    <div class="flex items-center mt-1">
+                                        <div class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold mr-2"
+                                            id="detailAvatar">U</div>
+                                        <span class="font-bold text-gray-800" id="detailAuthor">--</span>
+                                    </div>
+                                </div>
+                                <!-- Contact Info -->
+                                <div class="text-right">
+                                    <p class="text-xs text-gray-400 font-bold uppercase">Liên hệ</p>
+                                    <p class="font-bold text-gray-800 select-all cursor-text" id="detailContact">--</p>
+                                </div>
+                            </div>
+
+                            <a href="#" id="detailChatLink"
+                                class="w-full flex justify-center items-center bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-black transition shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                                <i class="fas fa-comment-alt mr-2"></i> Nhắn tin trao đổi
+                            </a>
+                        </div>
+
+                        <!-- Owner Actions (Edit/Delete) -->
+                        <div id="ownerActions" class="hidden grid-cols-2 gap-4 mt-auto">
+                            <button onclick="editPost()"
+                                class="flex items-center justify-center w-full bg-white border-2 border-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:border-gray-400 hover:text-black transition">
+                                <i class="fas fa-pen mr-2"></i>Sửa tin
+                            </button>
+                            <button onclick="deletePost()"
+                                class="flex items-center justify-center w-full bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-100 transition">
+                                <i class="fas fa-trash mr-2"></i>Xóa tin
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentDetailId = null;
+
+    function openDetailModal(itemId) {
+        console.log('[DetailModal] Opening for Item ID:', itemId);
+        currentDetailId = itemId;
+        document.getElementById('detailModal').classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+
+        // Reset fields
+        document.getElementById('detailTitle').textContent = 'Đang tải...';
+
+        // Fetch Data
+        console.log('[DetailModal] Fetching data...');
+        fetch('/api/posts/' + itemId)
+            .then(res => res.json())
+            .then(response => {
+                console.log('[DetailModal] Data received:', response);
+                if (response.success) {
+                    populateDetail(response.data);
+                } else {
+                    alert('Không tìm thấy bài viết.');
+                    closeDetailModal();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Lỗi kết nối.');
+                closeDetailModal();
+            });
+    }
+
+    function closeDetailModal() {
+        document.getElementById('detailModal').classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+
+        // Check URL for cleanup
+        const url = new URL(window.location);
+        if (url.searchParams.has('new_post_id')) {
+            url.searchParams.delete('new_post_id');
+            window.history.replaceState({}, document.title, url.toString());
+        }
+    }
+
+    function populateDetail(item) {
+        // Elements
+        const badge = document.getElementById('detailBadge');
+
+        // Text Content
+        document.getElementById('detailTitle').textContent = item.title;
+        document.getElementById('detailAuthor').textContent = item.user;
+        document.getElementById('detailAvatar').textContent = item.user.charAt(0).toUpperCase();
+        document.getElementById('detailDate').textContent = new Date(item.date_posted).toLocaleDateString();
+        document.getElementById('detailIncidentDate').textContent = item.incident_date ? new Date(item.incident_date).toLocaleString('vi-VN') : 'Không rõ';
+        document.getElementById('detailCategory').textContent = item.category || 'Chưa phân loại';
+        document.getElementById('detailLocation').textContent = item.location + (item.specific_location ? ` - ${item.specific_location}` : '');
+        document.getElementById('detailDescription').textContent = item.description;
+        document.getElementById('detailContact').textContent = item.contact_info;
+
+        // Styling based on Type (Badge only)
+        if (item.item_type === 'Lost') {
+            badge.className = "bg-red-100 text-red-600 text-xs font-bold px-4 py-2 rounded-full uppercase tracking-wider inline-flex items-center gap-2 shadow-sm";
+            badge.innerHTML = '<i class="fas fa-exclamation-circle"></i> Mất đồ';
+        } else {
+            badge.className = "bg-green-100 text-green-600 text-xs font-bold px-4 py-2 rounded-full uppercase tracking-wider inline-flex items-center gap-2 shadow-sm";
+            badge.innerHTML = '<i class="fas fa-check-circle"></i> Nhặt được';
+        }
+
+        // Images Logic
+        const mainImg = document.getElementById('detailMainImage');
+        const strip = document.getElementById('detailImageStrip');
+        const noImg = document.getElementById('detailNoImage');
+        const prevBtn = document.getElementById('prevImageBtn');
+        const nextBtn = document.getElementById('nextImageBtn');
+        const counter = document.getElementById('imageCounter');
+
+        strip.innerHTML = '';
+
+        // Prepare list of images (item.images is list of urls, item.image_url is primary optional)
+        let images = item.images || [];
+        if (images.length === 0 && item.image_url) {
+            images = [item.image_url];
+        }
+
+        // Store in global variable for navigation
+        currentImages = images;
+        currentImageIndex = 0;
+
+        if (images.length > 0) {
+            mainImg.style.display = 'block';
+            noImg.style.display = 'none';
+            strip.classList.remove('hidden');
+
+            // Normalize URL function
+            const getUrl = (path) => path.startsWith('http') ? path : `/static/${path.replace(/^static\//, '').replace(/^\/static\//, '')}`;
+
+            // Set initial main image
+            mainImg.src = getUrl(images[0]);
+
+            // Show/hide navigation controls
+            if (images.length > 1) {
+                prevBtn.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+                counter.classList.remove('hidden');
+                document.getElementById('currentImageIndex').textContent = '1';
+                document.getElementById('totalImages').textContent = images.length;
+
+                // Thumbnails
+                images.forEach((img, index) => {
+                    const thumb = document.createElement('img');
+                    thumb.src = getUrl(img);
+                    thumb.className = "h-14 w-14 object-cover rounded-md border-2 border-transparent hover:border-white cursor-pointer transition opacity-70 hover:opacity-100";
+                    thumb.onclick = () => {
+                        currentImageIndex = index;
+                        updateMainImage();
+                    };
+                    strip.appendChild(thumb);
+                });
+            } else {
+                prevBtn.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+                counter.classList.add('hidden');
+            }
+        } else {
+            mainImg.style.display = 'none';
+            strip.classList.add('hidden');
+            noImg.style.display = 'flex';
+            prevBtn.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            counter.classList.add('hidden');
+        }
+
+        // Actions Logic - Show chat button, hide edit/delete
+        const ownerActions = document.getElementById('ownerActions');
+        const viewerActions = document.getElementById('viewerActions');
+        const chatLink = document.getElementById('detailChatLink');
+
+        ownerActions.classList.add('hidden');
+        viewerActions.classList.remove('hidden');
+        if (chatLink) chatLink.href = "/messages";
+    }
+
+    function editPost() {
+        window.location.href = "/post/edit/" + currentDetailId;
+    }
+
+    function deletePost() {
+        if (confirm('Bạn có chắc chắn muốn xóa bài viết này không?')) {
+            // Ideally call API then reload
+            fetch('/post/delete/' + currentDetailId, { method: 'POST' })
+                .then(res => {
+                    if (res.ok) {
+                        alert("Đã xóa bài viết.");
+                        window.location.reload();
+                    } else {
+                        alert("Lỗi khi xóa.");
+                    }
+                });
+        }
+    }
+
+    // Image Navigation
+    let currentImages = [];
+    let currentImageIndex = 0;
+
+    function navigateImage(direction) {
+        if (currentImages.length === 0) return;
+
+        currentImageIndex += direction;
+
+        // Loop around
+        if (currentImageIndex < 0) currentImageIndex = currentImages.length - 1;
+        if (currentImageIndex >= currentImages.length) currentImageIndex = 0;
+
+        updateMainImage();
+    }
+
+    function updateMainImage() {
+        const mainImg = document.getElementById('detailMainImage');
+        const getUrl = (path) => path.startsWith('http') ? path : `/static/${path.replace(/^static\//, '').replace(/^\/static\//, '')}`;
+
+        mainImg.src = getUrl(currentImages[currentImageIndex]);
+
+        // Update counter
+        document.getElementById('currentImageIndex').textContent = currentImageIndex + 1;
+        document.getElementById('totalImages').textContent = currentImages.length;
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        const modal = document.getElementById('detailModal');
+        if (!modal.classList.contains('hidden')) {
+            if (e.key === 'ArrowLeft') navigateImage(-1);
+            if (e.key === 'ArrowRight') navigateImage(1);
+            if (e.key === 'Escape') closeDetailModal();
+        }
+    });
+</script>

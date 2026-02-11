@@ -1,7 +1,7 @@
 """
 View posts routes (index/home page)
 """
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, jsonify
 from app.models.item import Item
 
 bp = Blueprint('posts_view', __name__)
@@ -18,3 +18,11 @@ def index():
     else:
         items = Item.query.order_by(Item.date_posted.desc()).all()
     return render_template('posts/index.html', items=items, query=query)
+
+@bp.route('/api/posts/<int:item_id>')
+def get_post_detail(item_id):
+    item = Item.query.get_or_404(item_id)
+    return jsonify({
+        'success': True,
+        'data': item.to_dict()
+    })

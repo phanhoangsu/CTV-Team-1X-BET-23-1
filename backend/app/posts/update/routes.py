@@ -1,0 +1,142 @@
+"""
+Update post routes
+"""
+import os
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
+from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
+from app.extensions import db
+from app.models.item import Item
+from app.models.item_image import ItemImage
+from app.models.action_log import ActionLog
+from app.services.ai_service import ai_detector
+from app.services.ai_trainer import refresh_ai_model
+
+bp = Blueprint('posts_update', __name__)
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+@bp.route('/post/edit/<int:item_id>', methods=['GET', 'POST'])
+@login_required
+def edit_item(item_id):
+    item = Item.query.get_or_404(item_id)
+    
+    # Check ownership or admin
+    if item.user_id != current_user.id and not current_user.is_admin:
+        flash('Bạn không có quyền chỉnh sửa bài viết này.', 'danger')
+        return redirect(url_for('posts_view.index'))
+
+    if request.method == 'POST':
+        # Handle AJAX/JSON requests vs Form submit
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
+        title = request.form.get('title')
+        desc = request.form.get('description')
+        location = request.form.get('location')
+        specific_location = request.form.get('specific_location')
+        category = request.form.get('category')
+        itype = request.form.get('item_type')
+        contact = request.form.get('contact_info')
+        status = request.form.get('status', item.status)
+        
+        # AI Spam Check (Optional on edit, maybe skip or warn)
+        # post_text = f"{title} {desc}"
+        # is_spam, score = ai_detector.is_spam(post_text)
+        # if is_spam:
+        #     if is_ajax:
+        #         return jsonify({'success': False, 'message': f'Nội dung bị từ chối (Spam score: {score:.2f})'})
+        #     flash(f'Nội dung bị từ chối (Spam score: {score:.2f})', 'warning')
+        #     return render_template('posts/post_item.html', item=item, is_edit=True)
+
+        item.title = title
+        item.description = desc
+        item.location = location
+        item.specific_location = specific_location
+        item.category = category
+        item.item_type = itype
+        item.contact_info = contact
+        item.status = status
+        
+        # Handle deleted images
+        deleted_images_json = request.form.get('deleted_images')
+        if deleted_images_json:
+            import json
+            try:
+                deleted_images = json.loads(deleted_images_json)
+                print(f"[UPDATE] Deleting images: {deleted_images}")
+                
+                for img_url in deleted_images:
+                    # Find and delete from database
+                    img_obj = ItemImage.query.filter_by(image_url=img_url, item_id=item.id).first()
+                    if img_obj:
+                        db.session.delete(img_obj)
+                        print(f"[UPDATE] Deleted image from DB: {img_url}")
+                    
+                    # Delete physical file
+                    try:
+                        file_path = os.path.join(current_app.static_folder, img_url)
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                            print(f"[UPDATE] Deleted file: {file_path}")
+                    except Exception as e:
+                        print(f"[UPDATE] Error deleting file {img_url}: {e}")
+            except Exception as e:
+                print(f"[UPDATE] Error processing deleted_images: {e}")
+        
+        # Handle Image Uploads
+        uploaded_files = request.files.getlist('images')
+        
+        # Process files
+        new_images = []
+        for file in uploaded_files:
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                # Add timestamp to avoid conflicts
+                import time
+                filename = f"{int(time.time())}_{filename}"
+                
+                # Create upload dir if not exists
+                upload_dir = os.path.join(current_app.static_folder, 'uploads', 'posts')
+                os.makedirs(upload_dir, exist_ok=True)
+                
+                # Save file
+                file_path = os.path.join(upload_dir, filename)
+                file.save(file_path)
+                
+                # Create ItemImage
+                # Use relative path for URL
+                image_url = f"uploads/posts/{filename}" # Relative to static
+                img_obj = ItemImage(image_url=image_url, item=item)
+                db.session.add(img_obj)
+                new_images.append(image_url)
+                print(f"[UPDATE] Added new image: {image_url}")
+
+        # Update primary image_url
+        # Get all remaining images for this item
+        all_images = ItemImage.query.filter_by(item_id=item.id).all()
+        if all_images:
+            # Set first image as primary
+            item.image_url = all_images[0].image_url
+            print(f"[UPDATE] Primary image set to: {item.image_url}")
+        else:
+            # No images left
+            item.image_url = None
+            print(f"[UPDATE] No images remaining, set to None")
+
+        db.session.commit()
+        print(f"[UPDATE] Update completed for item {item.id}")
+        
+        # Log action
+        log = ActionLog(user_id=current_user.id, action="Cập nhật bài", details=f"ID: {item.id}")
+        db.session.add(log)
+        db.session.commit()
+        
+        if is_ajax:
+             return jsonify({'success': True, 'message': 'Cập nhật thành công!'})
+        
+        flash('Cập nhật tin thành công!', 'success')
+        return redirect(url_for('posts_view.item_detail', item_id=item.id))
+        
+    return render_template('posts/post_item.html', item=item, is_edit=True)

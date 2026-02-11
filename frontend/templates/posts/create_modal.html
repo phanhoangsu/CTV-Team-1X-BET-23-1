@@ -1,0 +1,355 @@
+<!-- Create Post Modal -->
+<div id="createPostModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity backdrop-filter backdrop-blur-sm"
+        onclick="closeCreateModal()"></div>
+
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Modal Panel -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div
+            class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full border border-gray-100">
+
+            <!-- Header -->
+            <div
+                class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-gray-100 flex justify-between items-center sticky top-0 z-10">
+                <h3 class="text-2xl font-bold leading-6 text-gray-900" id="modal-title">Tạo tin đăng mới</h3>
+                <button type="button" onclick="closeCreateModal()"
+                    class="text-gray-400 hover:text-gray-500 focus:outline-none rounded-full p-2 hover:bg-gray-100 transition">
+                    <span class="sr-only">Close</span>
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Form -->
+            <form id="createPostForm" onsubmit="submitPost(event)" class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                    <!-- Column 1: Classification -->
+                    <div class="space-y-6">
+                        <div class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">1. Phân loại
+                        </div>
+
+                        <!-- Type Segmented Control -->
+                        <div class="flex bg-gray-100 p-1 rounded-lg">
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="item_type" value="Lost" class="peer sr-only" checked
+                                    onchange="updateTheme(this)">
+                                <div
+                                    class="text-center py-2 rounded-md peer-checked:bg-white peer-checked:text-red-600 peer-checked:shadow text-gray-500 font-medium transition-all duration-200">
+                                    <i class="fas fa-search mr-2"></i>Mất đồ
+                                </div>
+                            </label>
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="item_type" value="Found" class="peer sr-only"
+                                    onchange="updateTheme(this)">
+                                <div
+                                    class="text-center py-2 rounded-md peer-checked:bg-white peer-checked:text-green-600 peer-checked:shadow text-gray-500 font-medium transition-all duration-200">
+                                    <i class="fas fa-hand-holding-heart mr-2"></i>Nhặt được
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Title Input -->
+                        <div class="relative">
+                            <input type="text" id="title" name="title"
+                                class="block rounded-lg px-2.5 pb-2.5 pt-5 w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-orange-600 peer"
+                                placeholder=" " required maxlength="100" />
+                            <label for="title"
+                                class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-2.5 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">Tiêu
+                                đề tin (Ví dụ: Ví Sen màu nâu)</label>
+                        </div>
+
+                        <!-- Category Select -->
+                        <div class="relative">
+                            <select id="category" name="category"
+                                class="block rounded-lg px-2.5 pb-2.5 pt-5 w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-orange-600 peer"
+                                required>
+                                <option value="" disabled selected></option>
+                                <option value="Ví tiền">Ví tiền</option>
+                                <option value="Giấy tờ">Giấy tờ tùy thân</option>
+                                <option value="Điện thoại">Điện thoại</option>
+                                <option value="Laptop">Laptop</option>
+                                <option value="Chìa khóa">Chìa khóa</option>
+                                <option value="Trang phục">Trang phục/Phụ kiện</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                            <label for="category"
+                                class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-2.5 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">Danh
+                                mục</label>
+                            <i
+                                class="fas fa-chevron-down absolute right-3 top-4 pt-1 text-gray-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Details -->
+                    <div class="space-y-6">
+                        <div class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">2. Chi tiết &
+                            Thời gian</div>
+
+                        <!-- Date Time Picker -->
+                        <div class="relative">
+                            <input type="datetime-local" id="incident_date" name="incident_date"
+                                class="block rounded-lg px-2.5 pb-2.5 pt-5 w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-orange-600 peer"
+                                required />
+                            <label for="incident_date"
+                                class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-2.5 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">Thời
+                                gian xảy ra</label>
+                        </div>
+
+                        <!-- Location Select -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="relative">
+                                <select id="location" name="location"
+                                    class="block rounded-lg px-2.5 pb-2.5 pt-5 w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-orange-600 peer"
+                                    required>
+                                    <option value="" disabled selected></option>
+                                    <option value="Alpha">Tòa Alpha</option>
+                                    <option value="Beta">Tòa Beta</option>
+                                    <option value="Gamma">Tòa Gamma</option>
+                                    <option value="Delta">Tòa Delta</option>
+                                    <option value="Epsilon">Tòa Epsilon</option>
+                                    <option value="Canteen">Canteen</option>
+                                    <option value="Library">Thư viện</option>
+                                    <option value="Parking">Nhà xe</option>
+                                    <option value="Other">Khác</option>
+                                </select>
+                                <label for="location"
+                                    class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-2.5 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">Khu
+                                    vực</label>
+                            </div>
+                            <!-- Specific Location -->
+                            <div class="relative">
+                                <input type="text" id="specific_location" name="specific_location"
+                                    class="block rounded-lg px-2.5 pb-2.5 pt-5 w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-orange-600 peer"
+                                    placeholder=" " />
+                                <label for="specific_location"
+                                    class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-2.5 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">Phòng/Vị
+                                    trí cụ thể</label>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="relative">
+                            <textarea id="description" name="description" rows="4"
+                                class="block rounded-lg px-2.5 pb-2.5 pt-5 w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-orange-600 peer"
+                                placeholder=" " required maxlength="500"></textarea>
+                            <label for="description"
+                                class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-2.5 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">Mô
+                                tả chi tiết (đặc điểm, tình trạng...)</label>
+                        </div>
+                    </div>
+
+                    <!-- Column 3: Images & Actions -->
+                    <div class="space-y-6">
+                        <div class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">3. Hình ảnh &
+                            Liên hệ</div>
+
+                        <!-- Image Upload -->
+                        <div class="w-full">
+                            <label class="block mb-2 text-sm font-medium text-gray-500">Hình ảnh đính kèm (Tối đa
+                                5)</label>
+                            <div class="flex items-center justify-center w-full"
+                                ondragover="event.preventDefault(); this.classList.add('border-orange-500', 'bg-orange-50')"
+                                ondragleave="this.classList.remove('border-orange-500', 'bg-orange-50')"
+                                ondrop="handleDrop(event)">
+                                <label for="dropzone-file"
+                                    class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-orange-500 transition-colors">
+                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                                        <p class="text-sm text-gray-500"><span class="font-semibold">Bấm để tải</span>
+                                            hoặc kéo thả</p>
+                                        <p class="text-xs text-gray-500">PNG, JPG, GIF (Max 5MB)</p>
+                                    </div>
+                                    <input id="dropzone-file" name="images" type="file" class="hidden" multiple
+                                        accept="image/*" onchange="previewImages(this)" />
+                                </label>
+                            </div>
+                            <div id="image-preview" class="grid grid-cols-3 gap-2 mt-4"></div>
+                        </div>
+
+                        <!-- Contact -->
+                        <div class="relative">
+                            <input type="text" id="contact_info" name="contact_info"
+                                class="block rounded-lg px-2.5 pb-2.5 pt-5 w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-orange-600 peer"
+                                placeholder=" " required />
+                            <label for="contact_info"
+                                class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-2.5 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">Thông
+                                tin liên hệ (SĐT/FB)</label>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="mt-8">
+                            <button type="submit" id="submitBtn"
+                                class="w-full text-white bg-orange-600 hover:bg-orange-700 focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-3 text-center transition flex items-center justify-center">
+                                <span id="btnText">Đăng tin ngay</span>
+                                <i id="btnIcon" class="fas fa-paper-plane ml-2"></i>
+                                <svg id="btnLoading" class="hidden animate-spin ml-2 h-5 w-5 text-white"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openCreateModal() {
+        document.getElementById('createPostModal').classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function closeCreateModal() {
+        document.getElementById('createPostModal').classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    function updateTheme(radio) {
+        const titleLabel = document.querySelector('label[for="title"]');
+        // Simple theme toggle if needed, for now just changing button color potentially
+        const btn = document.getElementById('submitBtn');
+        if (radio.value === 'Lost') {
+            btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            btn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+        } else {
+            btn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+            btn.classList.add('bg-green-600', 'hover:bg-green-700');
+        }
+    }
+
+    // Drag and Drop
+    function handleDrop(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove('border-orange-500', 'bg-orange-50');
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFiles(files);
+    }
+
+    function previewImages(input) {
+        handleFiles(input.files);
+    }
+
+    let selectedFiles = []; // Array to store files
+
+    function handleFiles(files) {
+        const preview = document.getElementById('image-preview');
+        // preview.innerHTML = ''; // Keep add to existing? User says "Drop into here". Better to append.
+
+        // Limit to 5 total?
+        if (selectedFiles.length + files.length > 5) {
+            alert("Tối đa 5 ảnh.");
+            return;
+        }
+
+        [...files].forEach(file => {
+            if (!file.type.startsWith('image/')) { return }
+
+            selectedFiles.push(file);
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement('div');
+                div.className = 'relative group h-24 w-full rounded-md overflow-hidden bg-gray-100';
+                div.innerHTML = `
+                    <img src="${e.target.result}" class="h-full w-full object-cover">
+                    <button type="button" onclick="removeImage(this, '${file.name}')" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                preview.appendChild(div);
+            }
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function removeImage(btn, fileName) {
+        btn.closest('div').remove();
+        selectedFiles = selectedFiles.filter(f => f.name !== fileName);
+    }
+
+    function submitPost(e) {
+        e.preventDefault();
+        console.log('[CreateModal] Submitting post...');
+
+        const btn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnIcon = document.getElementById('btnIcon');
+        const btnLoading = document.getElementById('btnLoading');
+
+        // Loading State
+        btn.disabled = true;
+        btnText.textContent = 'Đang xử lý...';
+        btnIcon.classList.add('hidden');
+        btnLoading.classList.remove('hidden');
+
+        const formData = new FormData(e.target);
+
+        // Replace 'images' in formData with our selectedFiles array
+        formData.delete('images');
+        selectedFiles.forEach(file => {
+            formData.append('images', file);
+        });
+
+        // Debug: Log form data keys
+        for (let [key, value] of formData.entries()) {
+            // Don't log file content, just name
+            if (value instanceof File) {
+                console.log(`[CreateModal] Form Data: ${key} = ${value.name}`);
+            } else {
+                console.log(`[CreateModal] Form Data: ${key} = ${value}`);
+            }
+        }
+
+        // AJAX Request
+        fetch('{{ url_for("posts_create.post_item") }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('[CreateModal] Server Response:', data);
+                if (data.success) {
+                    // Success
+                    btnText.textContent = 'Thành công!';
+                    btnLoading.classList.add('hidden');
+                    // Show Confetti/Icon
+
+                    setTimeout(() => {
+                        closeCreateModal();
+                        if (data.item_id) {
+                            window.location.href = `/?new_post_id=${data.item_id}`;
+                        } else {
+                            window.location.href = data.redirect_url || '/';
+                        }
+                    }, 1000);
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra.');
+                    btn.disabled = false;
+                    btnText.textContent = 'Đăng tin ngay';
+                    btnIcon.classList.remove('hidden');
+                    btnLoading.classList.add('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Lỗi kết nối.');
+                btn.disabled = false;
+                btnText.textContent = 'Đăng tin ngay';
+                btnIcon.classList.remove('hidden');
+                btnLoading.classList.add('hidden');
+            });
+    }
+</script>
