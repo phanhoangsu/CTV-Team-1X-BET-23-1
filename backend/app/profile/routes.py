@@ -89,16 +89,22 @@ def edit_profile():
             import os
             from flask import current_app
             filename = secure_filename(avatar_file.filename)
-            # Create uploads directory if it doesn't exist
-            uploads_dir = os.path.join(current_app.root_path, '../frontend/static/uploads')
+            # Fix: resolve absolute path to the frontend static uploads folder
+            uploads_dir = os.path.abspath(os.path.join(current_app.root_path, '../../frontend/static/uploads'))
             os.makedirs(uploads_dir, exist_ok=True)
-            # Add dynamic timestamp to avoid browser caching issues with same name
+            
             import time
             save_name = f"{int(time.time())}_{filename}"
             filepath = os.path.join(uploads_dir, save_name)
             avatar_file.save(filepath)
             # Update user's avatar_url to the newly uploaded file path
-            avatar_url = url_for('static', filename='uploads/' + save_name)
+            current_user.avatar_url = url_for('static', filename='uploads/' + save_name)
+        elif avatar_url:
+            # Update via URL if provided and no file was uploaded
+            current_user.avatar_url = avatar_url
+        elif 'avatar_url' in request.form:
+            # allow clearing avatar if the field is present but empty
+             current_user.avatar_url = ''
 
         # --- Validate email ---
         ok, result = validate_email(email)
@@ -125,8 +131,6 @@ def edit_profile():
         current_user.email       = result          # normalised email
         current_user.phone_number = result_phone if result_phone else phone
         current_user.about_me    = about
-        if avatar_url:
-            current_user.avatar_url = avatar_url
         db.session.commit()
 
         flash('Cập nhật hồ sơ thành công!', 'success')
