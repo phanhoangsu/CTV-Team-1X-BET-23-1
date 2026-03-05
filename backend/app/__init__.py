@@ -59,6 +59,9 @@ def register_blueprints(app):
     
     # Profile blueprint
     from app.profile.routes import bp as profile_bp
+
+    # Claims blueprint
+    from app.claims.routes import bp as claims_bp
     
     # Register all blueprints
     app.register_blueprint(auth_login_bp)
@@ -73,6 +76,7 @@ def register_blueprints(app):
     app.register_blueprint(admin_posts_bp)
     app.register_blueprint(admin_logs_bp)
     app.register_blueprint(profile_bp)
+    app.register_blueprint(claims_bp)
     
     # Register SocketIO events
     from app.messages.socketio import events
