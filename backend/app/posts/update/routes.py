@@ -41,14 +41,14 @@ def edit_item(item_id):
         contact = request.form.get('contact_info')
         status = request.form.get('status', item.status)
         
-        # AI Spam Check (Optional on edit, maybe skip or warn)
-        # post_text = f"{title} {desc}"
-        # is_spam, score = ai_detector.is_spam(post_text)
-        # if is_spam:
-        #     if is_ajax:
-        #         return jsonify({'success': False, 'message': f'Nội dung bị từ chối (Spam score: {score:.2f})'})
-        #     flash(f'Nội dung bị từ chối (Spam score: {score:.2f})', 'warning')
-        #     return render_template('posts/post_item.html', item=item, is_edit=True)
+        inc_date_str = request.form.get('incident_date')
+        if inc_date_str:
+            from datetime import datetime
+            try:
+                # Value can be 'YYYY-MM-DDTHH:MM'
+                item.incident_date = datetime.strptime(inc_date_str, '%Y-%m-%dT%H:%M')
+            except ValueError:
+                pass
 
         item.title = title
         item.description = desc
@@ -145,6 +145,6 @@ def edit_item(item_id):
              return jsonify({'success': True, 'message': 'Cập nhật thành công!'})
         
         flash('Cập nhật tin thành công!', 'success')
-        return redirect(url_for('posts_view.item_detail', item_id=item.id))
+        return redirect(url_for('posts_view.index', new_post_id=item.id))
         
     return render_template('posts/post_item.html', item=item, is_edit=True)

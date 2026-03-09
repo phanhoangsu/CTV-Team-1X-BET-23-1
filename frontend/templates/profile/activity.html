@@ -34,13 +34,20 @@
                                 &nbsp;·&nbsp;{{ item.date_posted.strftime('%d/%m/%Y') }}
                             </p>
                         </div>
-                        <form action="{{ url_for('posts_delete.delete_post', item_id=item.id) }}" method="POST"
-                            onsubmit="event.stopPropagation(); return confirm('Xoá bài đăng này?');">
-                            <button class="text-gray-300 hover:text-red-500 transition p-1" title="Xoá"
+                        <div class="flex items-center gap-2">
+                            <a href="{{ url_for('posts_update.edit_item', item_id=item.id) }}" title="Sửa"
+                                class="text-gray-300 hover:text-blue-500 transition p-1"
                                 onclick="event.stopPropagation();">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </form>
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ url_for('posts_delete.delete_post', item_id=item.id) }}" method="POST"
+                                onsubmit="event.stopPropagation(); return confirm('Xoá bài đăng này?');">
+                                <button class="text-gray-300 hover:text-red-500 transition p-1" title="Xoá"
+                                    onclick="event.stopPropagation();">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
                 {% else %}
@@ -74,13 +81,20 @@
                                 &nbsp;·&nbsp;{{ item.date_posted.strftime('%d/%m/%Y') }}
                             </p>
                         </div>
-                        <form action="{{ url_for('posts_delete.delete_post', item_id=item.id) }}" method="POST"
-                            onsubmit="event.stopPropagation(); return confirm('Xoá bài đăng này?');">
-                            <button class="text-gray-300 hover:text-red-500 transition p-1" title="Xoá"
+                        <div class="flex items-center gap-2">
+                            <a href="{{ url_for('posts_update.edit_item', item_id=item.id) }}" title="Sửa"
+                                class="text-gray-300 hover:text-blue-500 transition p-1"
                                 onclick="event.stopPropagation();">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </form>
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ url_for('posts_delete.delete_post', item_id=item.id) }}" method="POST"
+                                onsubmit="event.stopPropagation(); return confirm('Xoá bài đăng này?');">
+                                <button class="text-gray-300 hover:text-red-500 transition p-1" title="Xoá"
+                                    onclick="event.stopPropagation();">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
                 {% else %}
