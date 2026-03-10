@@ -302,7 +302,7 @@
 
         ownerActions.classList.add('hidden');
         viewerActions.classList.remove('hidden');
-        if (chatLink) chatLink.href = "/messages";
+        if (chatLink) chatLink.href = "/chat/" + item.user_id;
     }
 
     function editPost() {

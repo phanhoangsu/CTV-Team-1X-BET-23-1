@@ -32,7 +32,7 @@ class Item(db.Model):
             'item_type': self.item_type,
             'contact_info': self.contact_info,
             'image_url': self.image_url,
-            'date_posted': self.date_posted.isoformat(),
+            'date_posted': self.date_posted.isoformat() + 'Z',
             'incident_date': self.incident_date.isoformat() if self.incident_date else None,
             'images': [img.image_url for img in self.images_list],
             'user': self.user.username,
