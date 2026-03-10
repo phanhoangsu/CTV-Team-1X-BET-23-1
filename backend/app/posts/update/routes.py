@@ -18,6 +18,20 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
+@bp.route('/post/status/<int:item_id>', methods=['POST'])
+@login_required
+def update_status(item_id):
+    item = Item.query.get_or_404(item_id)
+    if item.user_id != current_user.id and not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Không có quyền thực hiện'}), 403
+    
+    data = request.json
+    if data and 'status' in data:
+        item.status = data['status']
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Cập nhật trạng thái thành công'})
+    return jsonify({'success': False, 'message': 'Dữ liệu không hợp lệ'}), 400
+
 @bp.route('/post/edit/<int:item_id>', methods=['GET', 'POST'])
 @login_required
 def edit_item(item_id):

@@ -145,17 +145,7 @@
                             </a>
                         </div>
 
-                        <!-- Owner Actions (Edit/Delete) -->
-                        <div id="ownerActions" class="hidden grid-cols-2 gap-4 mt-auto">
-                            <button onclick="editPost()"
-                                class="flex items-center justify-center w-full bg-white border-2 border-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:border-gray-400 hover:text-black transition">
-                                <i class="fas fa-pen mr-2"></i>Sửa tin
-                            </button>
-                            <button onclick="deletePost()"
-                                class="flex items-center justify-center w-full bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-100 transition">
-                                <i class="fas fa-trash mr-2"></i>Xóa tin
-                            </button>
-                        </div>
+
                     </div>
                 </div>
             </div>
@@ -164,6 +154,7 @@
 </div>
 
 <script>
+    const CURRENT_USER_ID = {{ current_user.id if current_user.is_authenticated else 'null' }};
     let currentDetailId = null;
 
     function openDetailModal(itemId) {
@@ -295,32 +286,17 @@
             counter.classList.add('hidden');
         }
 
-        // Actions Logic - Show chat button, hide edit/delete
-        const ownerActions = document.getElementById('ownerActions');
+        // Actions Logic
         const viewerActions = document.getElementById('viewerActions');
         const chatLink = document.getElementById('detailChatLink');
 
-        ownerActions.classList.add('hidden');
-        viewerActions.classList.remove('hidden');
-        if (chatLink) chatLink.href = "/chat/" + item.user_id;
-    }
-
-    function editPost() {
-        window.location.href = "/post/edit/" + currentDetailId;
-    }
-
-    function deletePost() {
-        if (confirm('Bạn có chắc chắn muốn xóa bài viết này không?')) {
-            // Ideally call API then reload
-            fetch('/post/delete/' + currentDetailId, { method: 'POST' })
-                .then(res => {
-                    if (res.ok) {
-                        alert("Đã xóa bài viết.");
-                        window.location.reload();
-                    } else {
-                        alert("Lỗi khi xóa.");
-                    }
-                });
+        if (CURRENT_USER_ID !== null && CURRENT_USER_ID === item.user_id) {
+            // Owner view - hide viewer actions (cannot chat with yourself)
+            viewerActions.classList.add('hidden');
+        } else {
+            // Viewer view
+            viewerActions.classList.remove('hidden');
+            if (chatLink) chatLink.href = "/chat/" + item.user_id;
         }
     }
 
