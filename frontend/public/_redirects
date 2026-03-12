@@ -1,0 +1,4 @@
+/*
+/* Fallback: redirect all non-file requests to index.html (SPA routing)
+/assets/* /assets/:splat 200
+/* /index.html 200

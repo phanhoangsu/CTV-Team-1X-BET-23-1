@@ -51,15 +51,10 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <script>
-    const socket = io();
     const recipientId = {{ recipient.id }};
     const currentUserId = {{ current_user.id }};
     const messagesDiv = document.getElementById('messages');
-
-    // Join specific room
-    socket.emit('join_chat', { recipient_id: recipientId });
 
     // Scroll to bottom
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -70,28 +65,50 @@
         const message = input.value.trim();
 
         if (message) {
-            socket.emit('send_message', {
-                recipient_id: recipientId,
-                message: message
+            fetch("{{ url_for('messages_chat.api_send_message') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    recipient_id: recipientId,
+                    message: message
+                })
             });
             input.value = '';
         }
     });
 
-    socket.on('receive_message', (data) => {
-        const isMe = data.sender_id === currentUserId;
-        const div = document.createElement('div');
-        div.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
+    // Wait for window.sse to be ready (created in base.html DOMContentLoaded)
+    function attachSSEListener() {
+        if (window.sse) {
+            window.sse.addEventListener('receive_message', (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (Object.keys(data).length === 0) return;
+                    const isMe = data.sender_id === currentUserId;
+                    const div = document.createElement('div');
+                    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
 
-        div.innerHTML = `
-            <div class="max-w-[70%] rounded-lg px-4 py-2 shadow-sm ${isMe ? 'bg-orange-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none'}">
-                <p>${data.message}</p>
-                 <span class="text-[10px] block mt-1 opacity-70 text-right">${data.timestamp.split(' ')[1]}</span>
-            </div>
-        `;
+                    div.innerHTML = `
+                        <div class="max-w-[70%] rounded-lg px-4 py-2 shadow-sm ${isMe ? 'bg-orange-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none'}">
+                            <p>${data.message}</p>
+                             <span class="text-[10px] block mt-1 opacity-70 text-right">${data.timestamp.split(' ')[1]}</span>
+                        </div>
+                    `;
 
-        messagesDiv.appendChild(div);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
+                    messagesDiv.appendChild(div);
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                } catch(err) {
+                    console.error("Error parsing message data:", err);
+                }
+            });
+            console.log("SSE receive_message listener attached!");
+        } else {
+            // window.sse not ready yet, retry in 100ms
+            setTimeout(attachSSEListener, 100);
+        }
+    }
+    attachSSEListener();
 </script>
 {% endblock %}
