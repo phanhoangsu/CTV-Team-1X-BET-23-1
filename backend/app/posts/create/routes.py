@@ -33,9 +33,15 @@ def post_item():
         specific_location = request.form.get('specific_location')
         category = request.form.get('category')
         itype = request.form.get('item_type')
-        contact = request.form.get('contact_info')
+        phone_number = request.form.get('phone_number')
+        facebook_url = request.form.get('facebook_url')
         incident_date_str = request.form.get('incident_date')
         
+        # Backward compatibility for contact_info column
+        contact = f"SĐT: {phone_number}"
+        if facebook_url:
+            contact += f" | FB: {facebook_url}"
+
         incident_date = None
         if incident_date_str:
             try:
@@ -59,8 +65,9 @@ def post_item():
 
         new_item = Item(
             title=title, description=desc, location=location, specific_location=specific_location,
-            category=category, item_type=itype, contact_info=contact, incident_date=incident_date,
-            user_id=current_user.id
+            category=category, item_type=itype, contact_info=contact, 
+            phone_number=phone_number, facebook_url=facebook_url,
+            incident_date=incident_date, user_id=current_user.id
         )
         db.session.add(new_item)
         db.session.commit() # Commit to get ID

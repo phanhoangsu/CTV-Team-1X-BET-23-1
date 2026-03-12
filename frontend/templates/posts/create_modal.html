@@ -59,6 +59,8 @@
                             <label for="title"
                                 class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-2.5 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">Tiêu
                                 đề tin (Ví dụ: Ví Sen màu nâu)</label>
+                            <p id="error-title" class="hidden text-red-500 text-xs mt-1">Trường này không được để trống
+                            </p>
                         </div>
 
                         <!-- Category Select -->
@@ -80,6 +82,8 @@
                                 mục</label>
                             <i
                                 class="fas fa-chevron-down absolute right-3 top-4 pt-1 text-gray-400 pointer-events-none"></i>
+                            <p id="error-category" class="hidden text-red-500 text-xs mt-1">Trường này không được để
+                                trống</p>
                         </div>
                     </div>
 
@@ -96,6 +100,8 @@
                             <label for="incident_date"
                                 class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-2.5 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">Thời
                                 gian xảy ra</label>
+                            <p id="error-incident_date" class="hidden text-red-500 text-xs mt-1">Trường này không được
+                                để trống</p>
                         </div>
 
                         <!-- Location Select -->
@@ -118,6 +124,8 @@
                                 <label for="location"
                                     class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-2.5 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">Khu
                                     vực</label>
+                                <p id="error-location" class="hidden text-red-500 text-xs mt-1">Trường này không được để
+                                    trống</p>
                             </div>
                             <!-- Specific Location -->
                             <div class="relative">
@@ -138,6 +146,8 @@
                             <label for="description"
                                 class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-2.5 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">Mô
                                 tả chi tiết (đặc điểm, tình trạng...)</label>
+                            <p id="error-description" class="hidden text-red-500 text-xs mt-1">Trường này không được để
+                                trống</p>
                         </div>
                     </div>
 
@@ -162,6 +172,15 @@
                                             hoặc kéo thả</p>
                                         <p class="text-xs text-gray-500">PNG, JPG, GIF (Max 5MB)</p>
                                     </div>
+                                    <!-- Progress Bar Overlay -->
+                                    <div id="upload-overlay"
+                                        class="absolute inset-0 bg-white bg-opacity-80 flex flex-col items-center justify-center hidden">
+                                        <div class="w-3/4 bg-gray-200 rounded-full h-2.5 mb-2">
+                                            <div id="upload-progress-bar" class="bg-orange-600 h-2.5 rounded-full"
+                                                style="width: 0%"></div>
+                                        </div>
+                                        <p class="text-xs text-orange-600 font-medium">Đang tải ảnh...</p>
+                                    </div>
                                     <input id="dropzone-file" name="images" type="file" class="hidden" multiple
                                         accept="image/*" onchange="previewImages(this)" />
                                 </label>
@@ -170,13 +189,39 @@
                         </div>
 
                         <!-- Contact -->
-                        <div class="relative">
-                            <input type="text" id="contact_info" name="contact_info"
-                                class="block rounded-lg px-2.5 pb-2.5 pt-5 w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-orange-600 peer"
-                                placeholder=" " required />
-                            <label for="contact_info"
-                                class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-2.5 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">Thông
-                                tin liên hệ (SĐT/FB)</label>
+                        <div class="space-y-4">
+                            <!-- Phone Input Group -->
+                            <div class="relative">
+                                <div
+                                    class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                                    <i class="fas fa-phone-alt"></i>
+                                </div>
+                                <input type="tel" id="phone_number" name="phone_number"
+                                    value="{{ current_user.phone if current_user.phone else '' }}"
+                                    class="block rounded-lg pl-10 pr-2.5 pb-2.5 pt-5 w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-orange-600 peer"
+                                    placeholder=" " required />
+                                <label for="phone_number"
+                                    class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-10 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">Số
+                                    điện thoại (VD: 0987xxxxxx)</label>
+                                <p id="error-phone_number" class="hidden text-red-500 text-xs mt-1">Trường này không
+                                    được để trống</p>
+                            </div>
+
+                            <!-- Facebook Input Group -->
+                            <div class="relative">
+                                <div
+                                    class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                                    <i class="fab fa-facebook"></i>
+                                </div>
+                                <input type="url" id="facebook_url" name="facebook_url"
+                                    class="block rounded-lg pl-10 pr-2.5 pb-2.5 pt-5 w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-orange-600 peer"
+                                    placeholder=" " oninput="this.setAttribute('value', this.value)" />
+                                <label for="facebook_url"
+                                    class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-10 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4 pointer-events-none">URL
+                                    Facebook </label>
+                                <p id="error-facebook_url" class="hidden text-red-500 text-xs mt-1">Vui lòng nhập đúng
+                                    định dạng URL Facebook</p>
+                            </div>
                         </div>
 
                         <!-- Submit Button -->
@@ -277,20 +322,149 @@
         selectedFiles = selectedFiles.filter(f => f.name !== fileName);
     }
 
+    function clearErrors() {
+        const errorMsgs = document.querySelectorAll('[id^="error-"]');
+        errorMsgs.forEach(msg => {
+            msg.classList.add('hidden');
+            const inputId = msg.id.replace('error-', '');
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.classList.remove('border-red-500');
+                input.classList.add('border-gray-300');
+            }
+        });
+    }
+
+    function showError(inputId, message) {
+        const errorMsg = document.getElementById(`error-${inputId}`);
+        const input = document.getElementById(inputId);
+        if (errorMsg) {
+            errorMsg.textContent = message;
+            errorMsg.classList.remove('hidden');
+        }
+        if (input) {
+            input.classList.remove('border-gray-300');
+            input.classList.add('border-red-500');
+        }
+    }
+
+    function validateForm() {
+        let isValid = true;
+        let firstErrorId = null;
+
+        clearErrors();
+
+        const title = document.getElementById('title');
+        if (!title.value.trim()) {
+            showError('title', 'Trường này không được để trống');
+            if (!firstErrorId) firstErrorId = 'title';
+            isValid = false;
+        }
+
+        const category = document.getElementById('category');
+        if (!category.value) {
+            showError('category', 'Trường này không được để trống');
+            if (!firstErrorId) firstErrorId = 'category';
+            isValid = false;
+        }
+
+        const incidentDateInput = document.getElementById('incident_date');
+        if (!incidentDateInput.value) {
+            showError('incident_date', 'Trường này không được để trống');
+            if (!firstErrorId) firstErrorId = 'incident_date';
+            isValid = false;
+        } else {
+            const incidentDate = new Date(incidentDateInput.value);
+            const now = new Date();
+            if (incidentDate > now) {
+                showError('incident_date', 'Không được chọn thời gian ở tương lai');
+                if (!firstErrorId) firstErrorId = 'incident_date';
+                isValid = false;
+            }
+        }
+
+        const location = document.getElementById('location');
+        if (!location.value) {
+            showError('location', 'Trường này không được để trống');
+            if (!firstErrorId) firstErrorId = 'location';
+            isValid = false;
+        }
+
+        const description = document.getElementById('description');
+        if (!description.value.trim()) {
+            showError('description', 'Trường này không được để trống');
+            if (!firstErrorId) firstErrorId = 'description';
+            isValid = false;
+        }
+
+        const phoneNumber = document.getElementById('phone_number');
+        if (!phoneNumber.value.trim()) {
+            showError('phone_number', 'Trường này không được để trống');
+            if (!firstErrorId) firstErrorId = 'phone_number';
+            isValid = false;
+        } else {
+            const value = phoneNumber.value.trim();
+            // Phone pattern: Vietnamese prefixes, 10 digits
+            const phonePattern = /^(0[3|5|7|8|9])[0-9]{8}$/;
+            if (!phonePattern.test(value)) {
+                showError('phone_number', 'Số điện thoại không hợp lệ (phải có 10 chữ số và bắt đầu bằng đầu số Việt Nam)');
+                if (!firstErrorId) firstErrorId = 'phone_number';
+                isValid = false;
+            }
+        }
+
+        const facebookUrl = document.getElementById('facebook_url');
+        if (facebookUrl.value.trim()) {
+            const value = facebookUrl.value.trim();
+            // Facebook URL pattern
+            const fbPattern = /(?:https?:\/\/)?(?:www\.)?facebook\.com\/.(?:(?:\w)*#!\/)?(?:pages\/)?(?:[\w\-]*\/)*([\w\-\.]*)/;
+            if (!fbPattern.test(value)) {
+                showError('facebook_url', 'Vui lòng nhập đúng đường dẫn trang cá nhân Facebook (ví dụ: facebook.com/username)');
+                if (!firstErrorId) firstErrorId = 'facebook_url';
+                isValid = false;
+            }
+        }
+
+        if (firstErrorId) {
+            const element = document.getElementById(firstErrorId);
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        return isValid;
+    }
+
     function submitPost(e) {
         e.preventDefault();
+
+        if (!validateForm()) {
+            return;
+        }
+
         console.log('[CreateModal] Submitting post...');
 
         const btn = document.getElementById('submitBtn');
         const btnText = document.getElementById('btnText');
         const btnIcon = document.getElementById('btnIcon');
         const btnLoading = document.getElementById('btnLoading');
+        const uploadOverlay = document.getElementById('upload-overlay');
+        const progressBar = document.getElementById('upload-progress-bar');
 
         // Loading State
         btn.disabled = true;
         btnText.textContent = 'Đang xử lý...';
         btnIcon.classList.add('hidden');
         btnLoading.classList.remove('hidden');
+
+        // Show upload progress simulation
+        if (selectedFiles.length > 0) {
+            uploadOverlay.classList.remove('hidden');
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                progressBar.style.width = `${progress}%`;
+                if (progress >= 90) clearInterval(interval);
+            }, 50);
+        }
 
         const formData = new FormData(e.target);
 
@@ -299,16 +473,6 @@
         selectedFiles.forEach(file => {
             formData.append('images', file);
         });
-
-        // Debug: Log form data keys
-        for (let [key, value] of formData.entries()) {
-            // Don't log file content, just name
-            if (value instanceof File) {
-                console.log(`[CreateModal] Form Data: ${key} = ${value.name}`);
-            } else {
-                console.log(`[CreateModal] Form Data: ${key} = ${value}`);
-            }
-        }
 
         // AJAX Request
         fetch('{{ url_for("posts_create.post_item") }}', {
@@ -322,10 +486,15 @@
             .then(data => {
                 console.log('[CreateModal] Server Response:', data);
                 if (data.success) {
-                    // Success
-                    btnText.textContent = 'Thành công!';
+                    if (selectedFiles.length > 0) {
+                        progressBar.style.width = '100%';
+                        setTimeout(() => {
+                            uploadOverlay.classList.add('hidden');
+                        }, 200);
+                    }
+
+                    btnText.textContent = 'Đăng tin thành công!';
                     btnLoading.classList.add('hidden');
-                    // Show Confetti/Icon
 
                     setTimeout(() => {
                         closeCreateModal();
@@ -337,6 +506,7 @@
                     }, 1000);
                 } else {
                     alert(data.message || 'Có lỗi xảy ra.');
+                    uploadOverlay.classList.add('hidden');
                     btn.disabled = false;
                     btnText.textContent = 'Đăng tin ngay';
                     btnIcon.classList.remove('hidden');
@@ -346,6 +516,7 @@
             .catch(error => {
                 console.error('Error:', error);
                 alert('Lỗi kết nối.');
+                uploadOverlay.classList.add('hidden');
                 btn.disabled = false;
                 btnText.textContent = 'Đăng tin ngay';
                 btnIcon.classList.remove('hidden');

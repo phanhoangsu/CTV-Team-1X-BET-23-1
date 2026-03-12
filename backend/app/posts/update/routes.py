@@ -52,8 +52,14 @@ def edit_item(item_id):
         specific_location = request.form.get('specific_location')
         category = request.form.get('category')
         itype = request.form.get('item_type')
-        contact = request.form.get('contact_info')
+        phone_number = request.form.get('phone_number')
+        facebook_url = request.form.get('facebook_url')
         status = request.form.get('status', item.status)
+        
+        # Backward compatibility for contact_info column
+        contact = f"SĐT: {phone_number}"
+        if facebook_url:
+            contact += f" | FB: {facebook_url}"
         
         inc_date_str = request.form.get('incident_date')
         if inc_date_str:
@@ -71,6 +77,8 @@ def edit_item(item_id):
         item.category = category
         item.item_type = itype
         item.contact_info = contact
+        item.phone_number = phone_number
+        item.facebook_url = facebook_url
         item.status = status
         
         # Handle deleted images

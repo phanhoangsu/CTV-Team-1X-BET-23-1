@@ -170,13 +170,39 @@
                         </div>
                     </div>
 
-                    <div class="relative">
-                        <input type="text" id="contact_info" name="contact_info" value="{{ item.contact_info }}"
-                            class="block rounded-lg px-2.5 pb-2.5 pt-5 w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-orange-600 peer"
-                            placeholder=" " required />
-                        <label for="contact_info"
-                            class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-2.5 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">Thông
-                            tin liên hệ (SĐT/FB)</label>
+                    <div class="space-y-4">
+                        <!-- Phone Input Group -->
+                        <div class="relative">
+                            <div
+                                class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                                <i class="fas fa-phone-alt"></i>
+                            </div>
+                            <input type="tel" id="phone_number" name="phone_number"
+                                value="{{ item.phone_number or '' }}"
+                                class="block rounded-lg pl-10 pr-2.5 pb-2.5 pt-5 w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-orange-600 peer"
+                                placeholder=" " required />
+                            <label for="phone_number"
+                                class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-10 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">Số
+                                điện thoại (VD: 0987xxxxxx)</label>
+                            <p id="error-phone_number" class="hidden text-red-500 text-xs mt-1">Trường này không được để
+                                trống</p>
+                        </div>
+
+                        <div class="relative">
+                            <div
+                                class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                                <i class="fab fa-facebook"></i>
+                            </div>
+                            <input type="url" id="facebook_url" name="facebook_url"
+                                value="{{ item.facebook_url or '' }}"
+                                class="block rounded-lg pl-10 pr-2.5 pb-2.5 pt-5 w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-orange-600 peer"
+                                placeholder=" " oninput="this.setAttribute('value', this.value)" />
+                            <label for="facebook_url"
+                                class="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] left-10 peer-focus:text-orange-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4 pointer-events-none">URL
+                                Facebook </label>
+                            <p id="error-facebook_url" class="hidden text-red-500 text-xs mt-1">Vui lòng nhập đúng định
+                                dạng URL Facebook</p>
+                        </div>
                     </div>
 
                     <div class="relative">
@@ -285,7 +311,120 @@
         selectedFiles = selectedFiles.filter(f => f.name !== fileName);
     }
 
+    function clearErrors() {
+        const errorMsgs = document.querySelectorAll('[id^="error-"]');
+        errorMsgs.forEach(msg => {
+            msg.classList.add('hidden');
+            const inputId = msg.id.replace('error-', '');
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.classList.remove('border-red-500');
+                input.classList.add('border-gray-300');
+            }
+        });
+    }
+
+    function showError(inputId, message) {
+        const errorMsg = document.getElementById(`error-${inputId}`);
+        const input = document.getElementById(inputId);
+        if (errorMsg) {
+            errorMsg.textContent = message;
+            errorMsg.classList.remove('hidden');
+        }
+        if (input) {
+            input.classList.remove('border-gray-300');
+            input.classList.add('border-red-500');
+        }
+    }
+
+    function validateForm() {
+        let isValid = true;
+        let firstErrorId = null;
+
+        clearErrors();
+
+        const title = document.getElementById('title');
+        if (!title.value.trim()) {
+            showError('title', 'Trường này không được để trống');
+            if (!firstErrorId) firstErrorId = 'title';
+            isValid = false;
+        }
+
+        const category = document.getElementById('category');
+        if (!category.value) {
+            showError('category', 'Trường này không được để trống');
+            if (!firstErrorId) firstErrorId = 'category';
+            isValid = false;
+        }
+
+        const incidentDateInput = document.getElementById('incident_date');
+        if (!incidentDateInput.value) {
+            showError('incident_date', 'Trường này không được để trống');
+            if (!firstErrorId) firstErrorId = 'incident_date';
+            isValid = false;
+        } else {
+            const incidentDate = new Date(incidentDateInput.value);
+            const now = new Date();
+            if (incidentDate > now) {
+                showError('incident_date', 'Không được chọn thời gian ở tương lai');
+                if (!firstErrorId) firstErrorId = 'incident_date';
+                isValid = false;
+            }
+        }
+
+        const location = document.getElementById('location');
+        if (!location.value) {
+            showError('location', 'Trường này không được để trống');
+            if (!firstErrorId) firstErrorId = 'location';
+            isValid = false;
+        }
+
+        const description = document.getElementById('description');
+        if (!description.value.trim()) {
+            showError('description', 'Trường này không được để trống');
+            if (!firstErrorId) firstErrorId = 'description';
+            isValid = false;
+        }
+
+        const phoneNumber = document.getElementById('phone_number');
+        if (!phoneNumber.value.trim()) {
+            showError('phone_number', 'Trường này không được để trống');
+            if (!firstErrorId) firstErrorId = 'phone_number';
+            isValid = false;
+        } else {
+            const value = phoneNumber.value.trim();
+            const phonePattern = /^(0[3|5|7|8|9])[0-9]{8}$/;
+            if (!phonePattern.test(value)) {
+                showError('phone_number', 'Số điện thoại không hợp lệ (phải có 10 chữ số và bắt đầu bằng đầu số Việt Nam)');
+                if (!firstErrorId) firstErrorId = 'phone_number';
+                isValid = false;
+            }
+        }
+
+        const facebookUrl = document.getElementById('facebook_url');
+        if (facebookUrl.value.trim()) {
+            const value = facebookUrl.value.trim();
+            const fbPattern = /(?:https?:\/\/)?(?:www\.)?facebook\.com\/.(?:(?:\w)*#!\/)?(?:pages\/)?(?:[\w\-]*\/)*([\w\-\.]*)/;
+            if (!fbPattern.test(value)) {
+                showError('facebook_url', 'Vui lòng nhập đúng đường dẫn trang cá nhân Facebook (ví dụ: facebook.com/username)');
+                if (!firstErrorId) firstErrorId = 'facebook_url';
+                isValid = false;
+            }
+        }
+
+        if (firstErrorId) {
+            const element = document.getElementById(firstErrorId);
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        return isValid;
+    }
+
     function submitEdit(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+            return false;
+        }
         const dataTransfer = new DataTransfer();
         selectedFiles.forEach(file => dataTransfer.items.add(file));
         const fileInput = document.getElementById('dropzone-file');
