@@ -135,7 +135,12 @@
                                 <!-- Contact Info -->
                                 <div class="text-right">
                                     <p class="text-xs text-gray-400 font-bold uppercase">Liên hệ</p>
-                                    <p class="font-bold text-gray-800 select-all cursor-text" id="detailContact">--</p>
+                                    <div class="flex items-center justify-end space-x-3 mt-1">
+                                        <p class="font-bold text-gray-800 select-all cursor-text" id="detailContact">--</p>
+                                        <a id="detailFbLink" href="#" target="_blank" class="hidden text-blue-600 hover:text-blue-800 transition transform hover:scale-110">
+                                            <i class="fab fa-facebook text-2xl"></i>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
 
@@ -216,7 +221,25 @@
         document.getElementById('detailCategory').textContent = item.category || 'Chưa phân loại';
         document.getElementById('detailLocation').textContent = item.location + (item.specific_location ? ` - ${item.specific_location}` : '');
         document.getElementById('detailDescription').textContent = item.description;
-        document.getElementById('detailContact').textContent = item.contact_info;
+        document.getElementById('detailContact').textContent = item.phone_number || item.contact_info;
+
+        // Facebook Link Logic
+        const fbLink = document.getElementById('detailFbLink');
+        if (item.facebook_url) {
+            let url = item.facebook_url.trim();
+            // Basic normalization
+            if (!url.startsWith('http')) {
+                if (url.includes('facebook.com')) {
+                    url = 'https://' + url;
+                } else {
+                    url = 'https://www.facebook.com/' + url;
+                }
+            }
+            fbLink.href = url;
+            fbLink.classList.remove('hidden');
+        } else {
+            fbLink.classList.add('hidden');
+        }
 
         // Styling based on Type (Badge only)
         if (item.item_type === 'Lost') {

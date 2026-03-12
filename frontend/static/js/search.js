@@ -301,7 +301,25 @@
                         <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-600 font-bold border border-gray-200 shadow-sm text-xs">${initial}</div>
                         <span class="font-medium text-gray-700 truncate max-w-[100px]">${esc(username)}</span>
                     </div>
-                    <span class="text-orange-600 font-bold">Xem chi tiết <i class="fas fa-arrow-right ml-1"></i></span>
+                    <div class="flex items-center space-x-3">
+                        ${item.phone_number ? `
+                            <a href="tel:${esc(item.phone_number)}" onclick="event.stopPropagation()" class="text-green-600 hover:scale-110 transition-transform p-1" title="Gọi điện">
+                                <i class="fas fa-phone-alt"></i>
+                            </a>
+                        ` : ''}
+                        ${item.facebook_url ? `
+                            <a href="${item.facebook_url.startsWith('http') ? esc(item.facebook_url) : 'https://www.facebook.com/' + esc(item.facebook_url)}" 
+                               target="_blank" onclick="event.stopPropagation()" class="text-blue-600 hover:scale-110 transition-transform p-1" title="Facebook">
+                                <i class="fab fa-facebook text-lg"></i>
+                            </a>
+                        ` : ''}
+                        
+                        ${(!item.phone_number && !item.facebook_url) ? `
+                            <span class="text-orange-600 font-bold ml-1">Xem chi tiết <i class="fas fa-arrow-right ml-0.5"></i></span>
+                        ` : `
+                            <i class="fas fa-chevron-right text-gray-300 ml-1"></i>
+                        `}
+                    </div>
                 </div>
             </div>`;
         });
