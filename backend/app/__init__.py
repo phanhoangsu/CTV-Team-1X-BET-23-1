@@ -21,11 +21,10 @@ def create_app(config_name=None):
     os.makedirs(app.config['INSTANCE_DIR'], exist_ok=True)
     
     # Initialize extensions
-    from app.extensions import db, login_manager, socketio
+    from app.extensions import db, login_manager
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = 'auth_login.login'
-    socketio.init_app(app)
     
     # Register core hooks
     from app.core.hooks import register_hooks
@@ -64,6 +63,9 @@ def register_blueprints(app):
     # Search & Filter blueprint
     from app.search.routes import bp as search_bp
     
+    # SSE (Server-Sent Events) blueprint - replaces SocketIO
+    from app.messages.sse.routes import bp as sse_bp
+    
     # Register all blueprints
     app.register_blueprint(auth_login_bp)
     app.register_blueprint(auth_register_bp)
@@ -79,9 +81,6 @@ def register_blueprints(app):
     app.register_blueprint(admin_logs_bp)
     app.register_blueprint(profile_bp)
     app.register_blueprint(search_bp)
+    app.register_blueprint(sse_bp)
     
-    # Register SocketIO events
-    from app.messages.socketio import events
 
-# Import socketio to make it accessible from app module
-from app.extensions import socketio
