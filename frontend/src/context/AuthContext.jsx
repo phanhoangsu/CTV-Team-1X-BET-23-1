@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getUserProfile } from '../services/userService';
+import { getUserProfile, logoutUser } from '../services/userService';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -13,6 +14,9 @@ export const AuthProvider = ({ children }) => {
                 setUser(data);
             } catch (error) {
                 console.error("Failed to fetch user", error);
+                setUser(null);
+            } finally {
+                setLoading(false);
             }
         };
         fetchUser();
@@ -22,15 +26,14 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
     };
 
-    const logout = () => {
+    const logout = async () => {
+        await logoutUser();
         setUser(null);
-        // In a real app, clear tokens here
-        alert("Đăng xuất thành công (Mock)");
         window.location.href = '/';
     };
 
     return (
-        <AuthContext.Provider value={{ user, updateUser, logout }}>
+        <AuthContext.Provider value={{ user, loading, updateUser, logout }}>
             {children}
         </AuthContext.Provider>
     );

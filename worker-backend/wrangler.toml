@@ -1,0 +1,12 @@
+name = "flostfound-api"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+[vars]
+JWT_SECRET = "change-this-in-production"
+CLOUDINARY_URL = "cloudinary://943732253697764:kifj9uG7v0mydXq_zJV3H_B_Je4@dbpqjnu0o"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "flostfound-db"
+database_id = "13977ef3-cb19-4f97-9735-3ed5fcb96ddd"

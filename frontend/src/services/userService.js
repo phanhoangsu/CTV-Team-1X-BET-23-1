@@ -1,46 +1,86 @@
-import { userMock } from "../mock/userMock";
+import { apiRequest } from './api';
 
-const USER_STORAGE_KEY = 'user_profile_data';
+/**
+ * Get current user profile from API
+ */
+export const getUserProfile = async () => {
+  const token = localStorage.getItem('auth_token');
+  if (!token) return null;
 
-// Simulate getting user profile from API (or LocalStorage)
-export const getUserProfile = () => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const stored = localStorage.getItem(USER_STORAGE_KEY);
-            if (stored) {
-                resolve(JSON.parse(stored));
-            } else {
-                // Init default data if empty
-                resolve({ ...userMock });
-            }
-        }, 500);
-    });
+  try {
+    const data = await apiRequest('/api/auth/me');
+    return data.user;
+  } catch {
+    // Token invalid or expired
+    localStorage.removeItem('auth_token');
+    return null;
+  }
 };
 
-// Simulate updating user profile
-export const updateProfile = (data) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            // Validation
-            if (!data.name) {
-                reject("Tên không được để trống!");
-                return;
-            }
+/**
+ * Login user
+ */
+export const loginUser = async (username, password) => {
+  const data = await apiRequest('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  });
 
-            // Simple Vietnam phone validation (starts with 0, 10-11 digits)
-            const phoneRegex = /^(0)(3[2-9]|5[6|8|9]|7[0|6-9]|8[0-6|8|9]|9[0-4|6-9])[0-9]{7}$/;
-            // Or purely generic 10 digits
-            const simplePhoneRegex = /^0\d{9}$/;
+  if (data.token) {
+    localStorage.setItem('auth_token', data.token);
+  }
 
-            if (!data.phone || !simplePhoneRegex.test(data.phone)) {
-                reject("Số điện thoại không hợp lệ! (Phải có 10 số, bắt đầu bằng 0)");
-                return;
-            }
+  return data;
+};
 
-            // Save to persistence
-            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data));
-            console.log("Updated data to backend:", data);
-            resolve({ success: true, message: "Cập nhật hồ sơ thành công!" });
-        }, 1000);
-    });
+/**
+ * Register user
+ */
+export const registerUser = async (username, email, password) => {
+  return apiRequest('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ username, email, password }),
+  });
+};
+
+/**
+ * Logout user
+ */
+export const logoutUser = async () => {
+  try {
+    await apiRequest('/api/auth/logout', { method: 'POST' });
+  } catch {
+    // Ignore errors on logout
+  }
+  localStorage.removeItem('auth_token');
+};
+
+/**
+ * Update user profile
+ */
+export const updateProfile = async (data) => {
+  return apiRequest('/api/profile', {
+    method: 'PUT',
+    body: JSON.stringify({
+      full_name: data.name || data.full_name,
+      email: data.email,
+      phone: data.phone || data.phone_number,
+      about: data.about || data.about_me,
+      avatar_url: data.avatar_url,
+    }),
+  });
+};
+
+/**
+ * Change password
+ */
+export const changePassword = async (oldPassword, newPassword, confirmPassword) => {
+  return apiRequest('/api/profile/password', {
+    method: 'PUT',
+    body: JSON.stringify({
+      old_password: oldPassword,
+      new_password: newPassword,
+      confirm_password: confirmPassword,
+    }),
+  });
 };

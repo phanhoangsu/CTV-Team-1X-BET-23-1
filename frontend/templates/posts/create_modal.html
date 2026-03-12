@@ -203,10 +203,28 @@
 </div>
 
 <script>
+    function setCurrentTimestamp() {
+        const now = new Date();
+        // Format: YYYY-MM-DDTHH:MM (required format for datetime-local input)
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const timestamp = `${year}-${month}-${day}T${hours}:${minutes}`;
+        document.getElementById('incident_date').value = timestamp;
+    }
+
     function openCreateModal() {
         document.getElementById('createPostModal').classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
+        setCurrentTimestamp();
     }
+
+    // Auto-fill timestamp on page load as well
+    document.addEventListener('DOMContentLoaded', function() {
+        setCurrentTimestamp();
+    });
 
     function closeCreateModal() {
         document.getElementById('createPostModal').classList.add('hidden');

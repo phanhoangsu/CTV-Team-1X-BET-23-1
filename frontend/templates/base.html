@@ -7,7 +7,6 @@
     <title>F-LostFound - Tìm Đồ Thất Lạc</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -203,23 +202,29 @@
             });
 
             {% if current_user.is_authenticated %}
-            const socket = io();
-            socket.on('connect', () => socket.emit('join_notifications'));
-            socket.on('notification', (data) => {
-                document.getElementById('nav-badge').classList.remove('hidden');
-                document.getElementById('bubble-badge').classList.remove('hidden');
+            const sse = new EventSource("{{ url_for('messages_chat.stream') }}");
+            window.sse = sse;
+            sse.addEventListener('notification', (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (Object.keys(data).length === 0) return;
+                    document.getElementById('nav-badge').classList.remove('hidden');
+                    document.getElementById('bubble-badge').classList.remove('hidden');
 
-                const container = document.getElementById('toast-container');
-                const toast = document.createElement('div');
-                toast.className = 'toast-message transform transition-all duration-500 ease-in-out px-6 py-4 rounded-xl shadow-lg text-white flex items-center min-w-[300px] bg-blue-500';
-                toast.innerHTML = `
-                <i class="fas fa-comment mr-3 text-xl"></i>
-                <div class="flex flex-col">
-                    <span class="font-bold text-sm">${data.sender_name}</span>
-                    <span class="text-xs truncate max-w-xs">${data.message}</span>
-                </div>`;
-                container.appendChild(toast);
-                setTimeout(() => { toast.classList.add('opacity-0', 'translate-x-full'); setTimeout(() => toast.remove(), 500); }, 4000);
+                    const container = document.getElementById('toast-container');
+                    const toast = document.createElement('div');
+                    toast.className = 'toast-message transform transition-all duration-500 ease-in-out px-6 py-4 rounded-xl shadow-lg text-white flex items-center min-w-[300px] bg-blue-500';
+                    toast.innerHTML = `
+                    <i class="fas fa-comment mr-3 text-xl"></i>
+                    <div class="flex flex-col">
+                        <span class="font-bold text-sm">${data.sender_name}</span>
+                        <span class="text-xs truncate max-w-xs">${data.message}</span>
+                    </div>`;
+                    container.appendChild(toast);
+                    setTimeout(() => { toast.classList.add('opacity-0', 'translate-x-full'); setTimeout(() => toast.remove(), 500); }, 4000);
+                } catch (err) {
+                    console.error("Error parsing notification data:", err);
+                }
             });
             {% endif %}
         });
