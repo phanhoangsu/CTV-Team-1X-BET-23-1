@@ -1,0 +1,11 @@
+name = "flostfound-worker"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+JWT_SECRET = "flostfound-secret-change-in-production"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "flostfound-backend-db"
+database_id = "4050d25f-05a2-4982-9396-63bea9886587"

@@ -1,26 +1,14 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-*.egg-info/
+# Dependencies
+node_modules/
+
+# Build output
 dist/
 build/
 
-# Virtual Environment
-.venv/
-venv/
-ENV/
-env/
-
-# Flask
-instance/
-*.db
-*.sqlite
-
 # Environment Variables
 .env
+.env.local
+.env.production
 
 # IDEs
 .vscode/
@@ -36,6 +24,6 @@ Thumbs.db
 # Logs
 *.log
 
-# Backend specific
-backend/instance/
-backend/*.db
+# Wrangler
+.wrangler/
+.dev.vars
