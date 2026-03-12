@@ -39,3 +39,9 @@ Thumbs.db
 # Backend specific
 backend/instance/
 backend/*.db
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
