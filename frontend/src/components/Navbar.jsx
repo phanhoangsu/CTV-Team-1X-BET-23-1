@@ -73,7 +73,7 @@ export default function Navbar() {
                           <Link to="/activity" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition"><i className="fas fa-history w-4 text-center"></i> Quản Lý Hoạt Động</Link>
                           <Link to="/change-password" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition"><i className="fas fa-key w-4 text-center"></i> Đổi Mật Khẩu</Link>
                           {user.is_admin && (
-                            <Link to="/admin" className="flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition"><i className="fas fa-cogs w-4 text-center"></i> Admin Panel</Link>
+                            <Link to="/admin/dashboard" className="flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition"><i className="fas fa-cogs w-4 text-center"></i> Admin Panel</Link>
                           )}
                           <div className="border-t border-gray-100 my-1"></div>
                           <button onClick={logout} className="flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 font-semibold transition w-full text-left"><i className="fas fa-sign-out-alt w-4 text-center"></i> Đăng Xuất</button>
